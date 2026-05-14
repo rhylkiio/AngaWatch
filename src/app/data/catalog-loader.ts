@@ -321,8 +321,8 @@ export class CatalogLoader {
       ServiceLocator.getTimeManager().init();
       ServiceLocator.getTimeManager().synchronize();
 
-      // Inject pro star catalog data before processing static objects
-      await CatalogLoader.injectStarData_();
+      // // Inject pro star catalog data before processing static objects
+      // await CatalogLoader.injectStarData_();
 
       /*
        * Filter TLEs
@@ -871,44 +871,44 @@ export class CatalogLoader {
    * Injects star data from the pro StarsPlugin if it is registered.
    * This is called before filterTLEDatabase so stars are part of the static set.
    */
-  private static async injectStarData_(): Promise<void> {
-    if (!__IS_PRO__) {
-      return;
-    }
+  // private static async injectStarData_(): Promise<void> {
+  //   if (!__IS_PRO__) {
+  //     return;
+  //   }
 
-    try {
-      const { StarsPlugin } = await import(/* @vite-ignore */ '../../plugins-pro/stars/stars-plugin') as {
-        StarsPlugin: { injectStars: () => Promise<void> };
-      };
+  //   try {
+  //     const { StarsPlugin } = await import(/* @vite-ignore */ '../../plugins-pro/stars/stars-plugin') as {
+  //       StarsPlugin: { injectStars: () => Promise<void> };
+  //     };
 
-      await StarsPlugin.injectStars();
-    } catch (error) {
-      if (CatalogLoader.isModuleNotFoundError_(error)) {
-        errorManagerInstance.warn(
-          'StarsPlugin is a Pro feature and could not be loaded. ' +
-          'If you are running the Pro build, verify your .env configuration, PRO_LICENSE_KEY, and plugins-pro files.',
-        );
-      } else {
-        errorManagerInstance.error(
-          error instanceof Error ? error : new Error(String(error)),
-          'CatalogLoader.injectStarData_',
-          `StarsPlugin failed to initialize: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      }
-    }
-  }
+  //     await StarsPlugin.injectStars();
+  //   } catch (error) {
+  //     if (CatalogLoader.isModuleNotFoundError_(error)) {
+  //       errorManagerInstance.warn(
+  //         'StarsPlugin is a Pro feature and could not be loaded. ' +
+  //         'If you are running the Pro build, verify your .env configuration, PRO_LICENSE_KEY, and plugins-pro files.',
+  //       );
+  //     } else {
+  //       errorManagerInstance.error(
+  //         error instanceof Error ? error : new Error(String(error)),
+  //         'CatalogLoader.injectStarData_',
+  //         `StarsPlugin failed to initialize: ${error instanceof Error ? error.message : String(error)}`,
+  //       );
+  //     }
+  //   }
+  // }
 
-  private static isModuleNotFoundError_(error: unknown): boolean {
-    if (!(error instanceof Error)) {
-      return false;
-    }
-    const code = (error as Error & { code?: string }).code;
+  // private static isModuleNotFoundError_(error: unknown): boolean {
+  //   if (!(error instanceof Error)) {
+  //     return false;
+  //   }
+  //   const code = (error as Error & { code?: string }).code;
 
-    return code === 'ERR_MODULE_NOT_FOUND' ||
-      code === 'MODULE_NOT_FOUND' ||
-      (/Cannot find module/u).test(error.message) ||
-      (/Failed to fetch dynamically imported module/u).test(error.message);
-  }
+  //   return code === 'ERR_MODULE_NOT_FOUND' ||
+  //     code === 'MODULE_NOT_FOUND' ||
+  //     (/Cannot find module/u).test(error.message) ||
+  //     (/Failed to fetch dynamically imported module/u).test(error.message);
+  // }
 
   /**
    * Removes any extra lines and \r characters from the given string array.

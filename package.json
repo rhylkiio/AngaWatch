@@ -96,7 +96,7 @@
     "@types/google-publisher-tag": "^1.20260216.0",
     "@types/jest": "^30.0.0",
     "@types/materialize-css": "^1.0.11",
-    "@types/node": "^24.7.0",
+    "@types/node": "^24.12.4",
     "@types/numeric": "^1.2.2",
     "@types/opener": "^1.4.3",
     "@types/papaparse": "^5.3.14",
