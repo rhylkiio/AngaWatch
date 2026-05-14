@@ -30,7 +30,7 @@ export class DataSettings {
      *
      * It can be loaded from a local file or a remote source
      */
-    tle: 'https://api.keeptrack.space/v4/sats/brief',
+    tle: 'https://api.keeptrack.space/v4/sats/celestrak',
     /** url for an external TLE source */
     externalTLEs: '',
     /**
