@@ -302,6 +302,12 @@ export const pluginManifest: PluginDescriptor[] = [
     defaultConfig: { enabled: true, order: 350 },
   },
   {
+    configKey: 'XRayFluxMonitor',
+    ossImport: () => import('./x-ray-flux-monitor/x-ray-status'),
+    ossClassName: 'XRayFluxMonitor',
+    defaultConfig: { enabled: true, order: 32 }, // Set to high priority for Events menu
+  },
+  {
     configKey: 'SeismicActivityPlugin',
     proImport: undefined,
     proClassName: 'SeismicActivityPlugin',
@@ -317,8 +323,9 @@ export const pluginManifest: PluginDescriptor[] = [
     configKey: 'NaturalEventsPlugin',
     proImport: undefined,
     proClassName: 'NaturalEventsPlugin',
-    defaultConfig: { enabled: false, order: 357 },
+    defaultConfig: { enabled: true, order: 357 },
   },
+
   {
     configKey: 'FindSatPlugin',
     ossImport: () => import('./find-sat/find-sat'),

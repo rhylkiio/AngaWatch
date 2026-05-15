@@ -1,0 +1,24 @@
+#xray-flux-monitor-menu.side-menu-parent {
+    z-index: 10001 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+}
+
+#xray-flux-monitor-menu .side-menu {
+    height: 100% !important;
+    position: relative !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: rgba(0, 0, 0, 0.9);
+    /* Ensures background is solid */
+}
+
+#xray-flux-monitor-menu .plot-analysis-chart.plot-analysis-menu-maximized {
+    width: 100%;
+    flex: 1;
+    min-height: 200px;
+    position: relative;
+}

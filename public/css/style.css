@@ -75,3 +75,15 @@
   display: flex;
   align-items: center;
 }
+
+#xray-flux-monitor-menu.side-menu-parent {
+  z-index: 10001 !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+}
+
+#xray-event-item:hover .menu-title {
+  color: var(--kt-text-primary);
+  /* Ensures text is visible on hover */
+}

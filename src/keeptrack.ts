@@ -195,6 +195,9 @@ export class KeepTrack {
         <div id="footer-toggle-wrapper">
           <div id="nav-footer-toggle">&#x25BC;</div>
         </div>
+        <div id="flaticon-attribution" style="font-size: 0.7em; color: rgba(255, 255, 255, 0.5); text-align: center; padding: 5px;">
+          <a href="https://www.flaticon.com/free-icons/solar" title="solar icons" style="color: inherit; text-decoration: none;">Solar icons created by orvipixel - Flaticon</a>
+        </div>
       </footer>`;
 
     if (!settingsManager.isShowSplashScreen) {
@@ -475,4 +478,3 @@ theodore.kruczek at gmail dot com.
     }
   }
 }
-
