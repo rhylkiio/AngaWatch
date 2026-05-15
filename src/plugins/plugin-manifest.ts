@@ -59,7 +59,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'ScenarioManagementMenu',
     proImport: undefined,
     proClassName: 'ScenarioManagementMenuPro',
-    defaultConfig: { enabled: false, order: 2 },
+    defaultConfig: { enabled: true, order: 2 },
   },
   {
     configKey: 'TopMenu',
@@ -268,14 +268,14 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'WatchlistPlugin',
     proImport: undefined,
     proClassName: 'WatchlistProPlugin',
-    defaultConfig: { enabled: false, order: 40 },
+    defaultConfig: { enabled: true, order: 40 },
     isLoginRequired: true,
   },
   {
     configKey: 'WatchlistOverlay',
     ossImport: () => import('./watchlist/watchlist-overlay'),
     ossClassName: 'WatchlistOverlay',
-    defaultConfig: { enabled: false, order: 41 },
+    defaultConfig: { enabled: true, order: 41 },
   },
   {
     configKey: 'WatchlistFilterPlugin',
@@ -325,7 +325,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'FindSatPlugin',
     proImport: undefined,
     proClassName: 'FindSatPro',
-    defaultConfig: { enabled: false, order: 80 },
+    defaultConfig: { enabled: true, order: 80 },
     isLoginRequired: false,
   },
   {
@@ -346,7 +346,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'Collisions',
     proImport: undefined,
     proClassName: 'CollisionsPro',
-    defaultConfig: { enabled: false, order: 90 },
+    defaultConfig: { enabled: true, order: 90 },
   },
   {
     configKey: 'TocaPocaPlugin',
@@ -374,7 +374,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'Reentries',
     proImport: undefined,
     proClassName: 'ReentriesPro',
-    defaultConfig: { enabled: false, order: 92 },
+    defaultConfig: { enabled: true, order: 92 },
   },
   {
     configKey: 'Breakup',
@@ -394,7 +394,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'DebrisScreening',
     proImport: undefined,
     proClassName: 'DebrisScreeningPro',
-    defaultConfig: { enabled: false, order: 280 },
+    defaultConfig: { enabled: true, order: 280 },
   },
   {
     configKey: 'transponderChannelData',
@@ -521,7 +521,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'SatelliteFov',
     proImport: undefined,
     proClassName: 'SatelliteFovPro',
-    defaultConfig: { enabled: false, order: 75 },
+    defaultConfig: { enabled: true, order: 75 },
     isLoginRequired: true,
   },
   {
@@ -669,7 +669,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'CatalogManagementPlugin',
     proImport: undefined,
     proClassName: 'CatalogManagementPro',
-    defaultConfig: { enabled: false, order: 420 },
+    defaultConfig: { enabled: true, order: 420 },
     isLoginRequired: true,
   },
   {
@@ -684,7 +684,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'CloseObjectsPlugin',
     proImport: undefined,
     proClassName: 'CloseObjectsPro',
-    defaultConfig: { enabled: false, order: 421 },
+    defaultConfig: { enabled: true, order: 421 },
     isLoginRequired: true,
   },
   {
@@ -693,7 +693,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'BestPassPlugin',
     proImport: undefined,
     proClassName: 'BestPassPro',
-    defaultConfig: { enabled: false, order: 422 },
+    defaultConfig: { enabled: true, order: 422 },
     isLoginRequired: true,
   },
   {
@@ -762,7 +762,7 @@ export const pluginManifest: PluginDescriptor[] = [
     ossClassName: 'Time2LonPlots',
     proImport: undefined,
     proClassName: 'Time2LonPlotsPro',
-    defaultConfig: { enabled: false, order: 263 },
+    defaultConfig: { enabled: true, order: 263 },
     isLoginRequired: true,
   },
   {
