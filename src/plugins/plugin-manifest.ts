@@ -308,6 +308,12 @@ export const pluginManifest: PluginDescriptor[] = [
     defaultConfig: { enabled: true, order: 32 }, // Set to high priority for Events menu
   },
   {
+    configKey: 'TartSrbMonitor',
+    ossImport: () => import('./tart-srb-monitor/tart-srb-status'),
+    ossClassName: 'TartSrbMonitor',
+    defaultConfig: { enabled: true, order: 33 },
+  },
+  {
     configKey: 'SeismicActivityPlugin',
     proImport: undefined,
     proClassName: 'SeismicActivityPlugin',
@@ -888,7 +894,7 @@ export const pluginManifest: PluginDescriptor[] = [
     configKey: 'CommandPalettePlugin',
     proImport: undefined,
     proClassName: 'CommandPalettePlugin',
-    defaultConfig: { enabled: false },
+    defaultConfig: { enabled: true, order: 600 },
   },
   {
     configKey: 'FavoritesMenuPlugin',
