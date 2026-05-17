@@ -202,6 +202,18 @@ export const pluginManifest: PluginDescriptor[] = [
     defaultConfig: { enabled: true, order: 10 },
   },
   {
+    configKey: 'SpaceWeatherListPlugin',
+    ossImport: () => import('./space-weather-sensors/space-weather-list'),
+    ossClassName: 'SpaceWeatherListPlugin',
+    defaultConfig: { enabled: true, order: 10.5 },
+  },
+  {
+    configKey: 'SpaceWeatherChartPlugin',
+    ossImport: () => import('./space-weather-chart/space-weather-chart'),
+    ossClassName: 'SpaceWeatherChartPlugin',
+    defaultConfig: { enabled: true, order: 10.6 },
+  },
+  {
     configKey: 'SensorInfoPlugin',
     ossImport: () => import('./sensor/sensor-info-plugin'),
     ossClassName: 'SensorInfoPlugin',

@@ -59,6 +59,8 @@ export type KeepTrackPluginsConfiguration = {
   ReportsPlugin?: PluginConfiguration;
   PolarPlotPlugin?: PluginConfiguration;
   NextLaunchesPlugin?: PluginConfiguration;
+  SpaceWeatherListPlugin?: PluginConfiguration;
+  SpaceWeatherChartPlugin?: PluginConfiguration;
   TartSrbMonitor?: PluginConfiguration;
   SeismicActivityPlugin?: PluginConfiguration;
   AuroraPlugin?: PluginConfiguration;
