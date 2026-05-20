@@ -259,6 +259,7 @@ export class WebpackManager {
           filename: `[name]${subFolder === 'dist' ? '.[contenthash]' : ''}.js`,
           path: `${dirName}/../${subFolder}/js`,
           publicPath: `./${pubPath}js/`,
+           workerPublicPath: `/js/`,
         },
         plugins: [
           this.versionDefine_,
@@ -340,11 +341,12 @@ export class WebpackManager {
           colorCruncher: ['./src/webworker/colorCruncher.ts'],
           debrisScreeningWorker: ['./src/webworker/debrisScreeningWorker.ts'],
           fovPredictionWorker: ['./src/webworker/fovPredictionWorker.ts'],
+          'ai-palette-worker': ['./src/webworker/ai-palette-worker.ts'],
         },
         output: {
           filename: '[name].js',
           path: `${dirName}/../${subFolder}/js`,
-          publicPath: `./${pubPath}js/`,
+          publicPath: `/js/`,
         },
         plugins: [
           new WebpackBar({

@@ -867,6 +867,12 @@ export const pluginManifest: PluginDescriptor[] = [
     defaultConfig: { enabled: false, order: 601 },
   },
   {
+    configKey: 'AiCommandPalettePlugin',
+    ossImport: () => import('./ai-command-palette/ai-command-palette'),
+    ossClassName: 'AiCommandPalettePlugin',
+    defaultConfig: { enabled: true, order: 602 }, // Load after TopMenu and SearchManager
+  },
+  {
     configKey: 'EarthPresetsPlugin',
     ossImport: () => import('./earth-presets/earth-presets'),
     ossClassName: 'EarthPresetsPlugin',
