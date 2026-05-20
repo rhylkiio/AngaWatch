@@ -24,7 +24,7 @@ export class SpaceWeatherListPlugin extends KeepTrackPlugin implements ICommandP
   dragOptions: ClickDragOptions = { isDraggable: true, minWidth: 550, maxWidth: 800 };
   menuMode: MenuMode[] = [MenuMode.ALL];
   bottomIconElementName = 'space-weather-list-bottom-icon';
-  bottomIconLabel = 'SW List';
+  bottomIconLabel = 'Space Weather List';
   bottomIconImg = solarFlarePng;
   sideMenuElementName = 'space-weather-list-menu';
   sideMenuTitle = 'Space Weather Sensors';
@@ -88,18 +88,7 @@ export class SpaceWeatherListPlugin extends KeepTrackPlugin implements ICommandP
         if (target.classList.contains('sw-graph-btn')) {
           e.stopPropagation();
 
-          const sensor = spaceWeatherSensors[sensorId];
-          const pluginIconId = sensor?.pluginIconId;
-
-          if (pluginIconId) {
-            // Open the sensor's dedicated plugin if it has a specific bottom icon.
-            if (this.isMenuButtonActive) {
-              getEl(this.bottomIconElementName)?.click();
-            }
-            getEl(pluginIconId)?.click();
-            return;
-          }
-
+          // Always open the shared Space Weather chart for listed sensors.
           if (this.isMenuButtonActive) {
             getEl(this.bottomIconElementName)?.click();
           }

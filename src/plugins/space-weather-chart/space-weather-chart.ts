@@ -162,9 +162,32 @@ export class SpaceWeatherChartPlugin extends KeepTrackPlugin {
                     x: { type: 'time', time: { unit: 'hour' }, ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.1)' } },
                     y: { ticks: { color: '#ddd' }, grid: { color: 'rgba(255,255,255,0.1)' } }
                 },
-                plugins: { legend: { labels: { color: '#ddd', boxWidth: 12, font: { size: 10 } } } }
+                plugins: {
+                    legend: { labels: { color: '#ddd', boxWidth: 12, font: { size: 10 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: (context: any) => {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+
+                                const val = context.parsed.y;
+                                if (val !== null && val !== undefined) {
+                                    // Switch to scientific notation for extremely small or large numbers
+                                    if (val !== 0 && (Math.abs(val) < 0.001 || Math.abs(val) >= 100000)) {
+                                        label += val.toExponential(3);
+                                    } else {
+                                        // Otherwise use standard formatting (up to 3 decimal places)
+                                        label += Number.isInteger(val) ? val.toString() : val.toFixed(3);
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
             }
-        });
+        }
+        );
     }
 
     private applyChartConfig_() {
@@ -175,9 +198,12 @@ export class SpaceWeatherChartPlugin extends KeepTrackPlugin {
         }
 
         const sensorName = spaceWeatherSensors[this.activeSensor_!]?.uiName || this.activeSensor_;
-        const mainTitleEl = getEl(`side-menu-title-${this.sideMenuElementName}`);
-        if (mainTitleEl) {
-            mainTitleEl.innerText = `${sensorName} Telemetry`;
+        const titleText = `${sensorName} Telemetry`;
+        this.sideMenuTitle = titleText;
+        const menuRoot = getEl(this.sideMenuElementName, true);
+        const titleEl = menuRoot ? menuRoot.querySelector<HTMLHeadingElement>('.side-menu-title-text') : null;
+        if (titleEl) {
+            titleEl.innerText = titleText;
         }
 
         this.setStatus_('Loading data...', false);
@@ -251,7 +277,12 @@ export class SpaceWeatherChartPlugin extends KeepTrackPlugin {
         const stopIso = new Date(targetMs + 12 * 60 * 60 * 1000).toISOString();
         this.cacheValidBounds_ = { start: targetMs - 12 * 60 * 60 * 1000, end: targetMs + 12 * 60 * 60 * 1000 };
 
-        const queryUrl = `${influxEnv.url.replace(/\/$/, '')}/api/v2/query?org=${encodeURIComponent(influxEnv.org)}`;
+        const baseUrl = (influxEnv.url || '').toString();
+        if (!baseUrl) {
+            console.warn('SW Chart: InfluxDB URL missing or empty.');
+            return this.setStatus_('InfluxDB not configured', true);
+        }
+        const queryUrl = `${baseUrl.replace(/\/$/, '')}/api/v2/query?org=${encodeURIComponent(influxEnv.org)}`;
         const headers = { 'Authorization': `Token ${influxEnv.token}`, 'Content-Type': 'application/json', 'Accept': 'application/csv' };
 
         // Ask the config file to generate its specific Flux queries
@@ -293,31 +324,48 @@ export class SpaceWeatherChartPlugin extends KeepTrackPlugin {
 
     // --- GENERIC PARSERS ---
     private parseGenericMetrics_(csv: string, config: any) {
-        if (!this.chart_) return;
+        if (!this.chart_ || typeof csv !== 'string') return;
 
         const lines = csv.replace(/\r/g, '').trim().split('\n');
-        const headerIndex = lines.findIndex(l => l.includes(',_time,'));
+        const headerIndex = lines.findIndex(l => l.includes('_time') && l.includes('_value'));
         if (headerIndex === -1) return;
 
         // Clear existing data from the chart
-        this.chart_.data.datasets.forEach(d => d.data = []);
+        this.chart_.data.datasets.forEach((d: any) => d.data = []);
 
-        // Tell the config file to parse its own metrics format
-        const dataLines = lines.slice(headerIndex).filter(l => !l.startsWith('#') && !l.startsWith(',result'));
-        config.parseMetrics(dataLines, this.chart_);
+        // CRITICAL FIX: Explicitly keep the header line at index 0.
+        // Only filter the rows that come *after* the header.
+        const headerLine = lines[headerIndex];
+        const rawData = lines.slice(headerIndex + 1).filter(l => l.trim() && !l.startsWith('#') && !l.startsWith(',result'));
+        const dataLines = [headerLine, ...rawData];
+
+        try {
+            config.parseMetrics(dataLines, this.chart_);
+        } catch (e) {
+            console.error('SW Chart: Error inside config.parseMetrics:', e);
+        }
 
         this.chart_.update('none');
     }
 
     private parseGenericStatus_(csv: string, config: any) {
+        if (typeof csv !== 'string') return;
+
         const lines = csv.replace(/\r/g, '').trim().split('\n');
-        const headerIndex = lines.findIndex(l => l.includes(',_time,'));
+        const headerIndex = lines.findIndex(l => l.includes('_time') && l.includes('_value'));
         if (headerIndex === -1) return;
 
-        // Tell the config file to parse its own status format and store the results
-        const dataLines = lines.slice(headerIndex).filter(l => !l.startsWith('#') && !l.startsWith(',result'));
-        this.statusCache_ = config.parseStatus(dataLines);
-        this.statusCache_.sort((a, b) => a.time - b.time);
+        // CRITICAL FIX: Explicitly keep the header line at index 0.
+        const headerLine = lines[headerIndex];
+        const rawData = lines.slice(headerIndex + 1).filter(l => l.trim() && !l.startsWith('#') && !l.startsWith(',result'));
+        const dataLines = [headerLine, ...rawData];
+
+        try {
+            this.statusCache_ = config.parseStatus(dataLines) || [];
+            this.statusCache_.sort((a, b) => a.time - b.time);
+        } catch (e) {
+            console.error('SW Chart: Error inside config.parseStatus:', e);
+        }
     }
 
     // --- UI UPDATES ---

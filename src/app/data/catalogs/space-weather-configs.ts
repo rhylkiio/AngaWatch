@@ -1,6 +1,45 @@
 // @app/app/data/catalogs/space-weather-configs.ts
 import { Chart } from 'chart.js';
 
+// --- CONFIG GENERATOR FOR IONOSONDES ---
+// Prevents massive code duplication by standardizing the Ionosonde config structure
+const createIonosondeConfig = (field: string, label: string, yAxisTitle: string, color: string) => ({
+    bucketEnv: 'INFLUXDB_IONOSONDE_BUCKET',
+    fallbackBucket: 'Malindi_Ionosonde_Autoscaled',
+    yAxis: { type: 'linear', title: { display: true, text: yAxisTitle, color: '#ddd' } },
+    lineTension: 0.4,
+    datasets: [{ label: label, borderColor: color, fill: false }],
+    queries: (baseQuery: string) => ({
+        // Matches your exact Grafana filtering
+        metrics: `${baseQuery} |> filter(fn: (r) => r["_measurement"] == "ionospheric_data" and r["_field"] == "${field}" and r["location"] == "Malindi, Kenya" and r["station"] == "ML10L") |> aggregateWindow(every: 5m, fn: mean, createEmpty: false)`,
+        status: null // No status alerts for Ionosonde yet
+    }),
+    parseMetrics: (lines: string[], chart: Chart) => {
+        if (!lines || lines.length <= 1) return;
+        const cleanHeader = lines[0].startsWith(',') ? lines[0].substring(1) : lines[0];
+        const safeSplit = (str: string) => str.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+
+        const h = safeSplit(cleanHeader);
+        const [tIdx, vIdx] = ['_time', '_value'].map(k => h.indexOf(k));
+
+        if (tIdx === -1 || vIdx === -1) return;
+
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+
+            const cleanLine = lines[i].startsWith(',') ? lines[i].substring(1) : lines[i];
+            const p = safeSplit(cleanLine);
+            if (p.length <= Math.max(tIdx, vIdx)) continue;
+
+            const tMs = new Date(p[tIdx]).getTime();
+            if (isNaN(tMs)) continue;
+
+            (chart.data.datasets[0].data as any).push({ x: tMs, y: parseFloat(p[vIdx] || '0') });
+        }
+    },
+    parseStatus: () => []
+});
+
 export const SENSOR_CHART_CONFIGS: Record<string, any> = {
     'TART': {
         bucketEnv: 'INFLUXDB_TART_BUCKET',
@@ -11,33 +50,54 @@ export const SENSOR_CHART_CONFIGS: Record<string, any> = {
             { label: 'Median Baseline Power', borderColor: '#8c96c6', backgroundColor: 'rgba(140, 150, 198, 0.68)', fill: true },
             { label: 'Detection Threshold (6σ)', borderColor: 'orange', fill: false }
         ],
-        // 1. Generate Queries
         queries: (baseQuery: string) => ({
             metrics: `${baseQuery} |> filter(fn: (r) => r["_measurement"] == "solar_radio_burst" and (r["_field"] == "median_power" or r["_field"] == "threshold")) |> aggregateWindow(every: 5m, fn: mean, createEmpty: false)`,
             status: `${baseQuery} |> filter(fn: (r) => r["_measurement"] == "solar_radio_burst" and r["_field"] == "srb_detected") |> aggregateWindow(every: 5m, fn: max, createEmpty: false)`
         }),
-        // 2. Parse Metrics
         parseMetrics: (lines: string[], chart: Chart) => {
+            if (!lines || lines.length <= 1) return;
             const h = lines[0].split(',');
             const [tIdx, vIdx, fIdx] = ['_time', '_value', '_field'].map(k => h.indexOf(k));
+
+            if (tIdx === -1 || vIdx === -1 || fIdx === -1) return;
+
             for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+
                 const p = lines[i].split(',');
+                if (p.length <= Math.max(tIdx, vIdx, fIdx)) continue;
+
                 const val = parseFloat(p[vIdx] || '0');
                 const tMs = new Date(p[tIdx]).getTime();
-                const field = p[fIdx].replace(/"/g, '');
+
+                if (isNaN(tMs)) continue;
+
+                const field = (p[fIdx] || '').replace(/"/g, '');
+
                 if (field === 'median_power') (chart.data.datasets[0].data as any).push({ x: tMs, y: val });
                 if (field === 'threshold') (chart.data.datasets[1].data as any).push({ x: tMs, y: val });
             }
         },
-        // 3. Parse Status
         parseStatus: (lines: string[]) => {
+            if (!lines || lines.length <= 1) return [];
             const h = lines[0].split(',');
             const [tIdx, vIdx] = [h.indexOf('_time'), h.indexOf('_value')];
-            return lines.slice(1).map(line => {
+
+            if (tIdx === -1 || vIdx === -1) return [];
+
+            return lines.slice(1).reduce((acc, line) => {
+                if (!line.trim()) return acc;
+
                 const p = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                const isDetected = parseFloat(p[vIdx]) === 1;
-                return { time: new Date(p[tIdx]).getTime(), msg: isDetected ? 'SRB Detected' : 'Nominal', isAlert: isDetected };
-            });
+                if (p.length <= Math.max(tIdx, vIdx)) return acc;
+
+                const tMs = new Date(p[tIdx]).getTime();
+                if (!isNaN(tMs)) {
+                    const isDetected = parseFloat(p[vIdx] || '0') === 1;
+                    acc.push({ time: tMs, msg: isDetected ? 'SRB Detected' : 'Nominal', isAlert: isDetected });
+                }
+                return acc;
+            }, [] as any[]);
         }
     },
 
@@ -64,20 +124,28 @@ export const SENSOR_CHART_CONFIGS: Record<string, any> = {
             status: `${baseQuery} |> filter(fn: (r) => r["_measurement"] == "hf_blackout" and r["_field"] == "status_message")`
         }),
         parseMetrics: (lines: string[], chart: Chart) => {
+            if (!lines || lines.length <= 1) return;
             const headerLine = lines[0];
-            const dataLines = lines.slice(1).filter(line => line && !line.startsWith('#') && !line.startsWith(',result'));
+            const dataLines = lines.slice(1).filter(line => line && line.trim() !== '' && !line.startsWith('#') && !line.startsWith(',result'));
+
             const h = headerLine.split(',');
             const [tIdx, vIdx, satIdx, energyIdx] = ['_time', '_value', 'satellite', 'energy'].map(k => h.indexOf(k));
+
+            if (tIdx === -1 || vIdx === -1 || satIdx === -1 || energyIdx === -1) return;
+
             const keyMap: Record<string, number> = {
-                'GOES16_0.1-0.8nm': 0,
-                'GOES16_0.05-0.4nm': 1,
-                'GOES17_0.1-0.8nm': 2,
-                'GOES17_0.05-0.4nm': 3
+                'GOES16_0.1-0.8nm': 0, 'GOES16_0.05-0.4nm': 1,
+                'GOES17_0.1-0.8nm': 2, 'GOES17_0.05-0.4nm': 3
             };
 
             for (const line of dataLines) {
                 const p = line.split(',');
+                if (p.length <= Math.max(tIdx, vIdx, satIdx, energyIdx)) continue;
+
                 const timeValue = p[tIdx];
+                const tMs = new Date(timeValue).getTime();
+                if (isNaN(tMs)) continue;
+
                 const value = parseFloat(p[vIdx] || '0');
                 const satellite = (p[satIdx] || '').replace(/"/g, '');
                 const energy = (p[energyIdx] || '').replace(/"/g, '');
@@ -85,41 +153,40 @@ export const SENSOR_CHART_CONFIGS: Record<string, any> = {
                 const datasetIndex = keyMap[key];
 
                 if (datasetIndex != null && value > 0) {
-                    (chart.data.datasets[datasetIndex].data as any).push({ x: new Date(timeValue).getTime(), y: value });
+                    (chart.data.datasets[datasetIndex].data as any).push({ x: tMs, y: value });
                 }
             }
         },
         parseStatus: (lines: string[]) => {
+            if (!lines || lines.length <= 1) return [];
             const h = lines[0].split(',');
             const [tIdx, vIdx] = [h.indexOf('_time'), h.indexOf('_value')];
-            return lines.slice(1).map(line => {
+
+            if (tIdx === -1 || vIdx === -1) return [];
+
+            return lines.slice(1).reduce((acc, line) => {
+                if (!line.trim()) return acc;
+
                 const parts = line.split(/,(?=(?:(?:[^\"]*"){2})*[^\"]*$)/);
-                const rawValue = parts[vIdx] || '';
-                const text = rawValue.replace(/^"|"$/g, '');
-                return { time: new Date(parts[tIdx]).getTime(), msg: text || 'X-Ray Monitor', isAlert: /flare|blackout|warning|caution/i.test(text) };
-            });
+                if (parts.length <= Math.max(tIdx, vIdx)) return acc;
+
+                const tMs = new Date(parts[tIdx]).getTime();
+                if (!isNaN(tMs)) {
+                    const rawValue = parts[vIdx] || '';
+                    const text = rawValue.replace(/^"|"$/g, '');
+                    acc.push({ time: tMs, msg: text || 'X-Ray Monitor', isAlert: /flare|blackout|warning|caution/i.test(text) });
+                }
+                return acc;
+            }, [] as any[]);
         }
     },
 
-    'IONOSONDE': {
-        bucketEnv: 'INFLUXDB_IONOSONDE_BUCKET',
-        fallbackBucket: 'Malindi_Ionosonde_Autoscaled',
-        yAxis: { type: 'linear', title: { display: true, text: 'MUF(3000)F2 (MHz)', color: '#ddd' } },
-        lineTension: 0.4,
-        datasets: [{ label: 'MUF over 3000km', borderColor: '#42f5ad', fill: false }],
-        queries: (baseQuery: string) => ({
-            metrics: `${baseQuery} |> filter(fn: (r) => r["_measurement"] == "ionospheric_data" and r["_field"] == "muf3000f2" and r["station"] == "ML10L") |> aggregateWindow(every: 5m, fn: mean, createEmpty: false)`,
-            status: null // No status alerts for Ionosonde yet
-        }),
-        parseMetrics: (lines: string[], chart: Chart) => {
-            const h = lines[0].split(',');
-            const [tIdx, vIdx] = ['_time', '_value'].map(k => h.indexOf(k));
-            for (let i = 1; i < lines.length; i++) {
-                const p = lines[i].split(',');
-                (chart.data.datasets[0].data as any).push({ x: new Date(p[tIdx]).getTime(), y: parseFloat(p[vIdx] || '0') });
-            }
-        },
-        parseStatus: () => [] // Returns empty array
-    }
-    // ... ADD GOES OR NEW SENSORS HERE Following the exact same structure!
+    // Dynamically generated configs using the helper
+    'IONOSONDE_MUF3000F2': createIonosondeConfig('muf3000f2', 'MUF over 3000km', 'MUF(3000)F2 (MHz)', '#42f5ad'),
+    'IONOSONDE_M3000F2': createIonosondeConfig('m3000f2', 'M(3000)F2 Factor', 'M(3000)F2', '#36a2eb'),
+    'IONOSONDE_FOF2': createIonosondeConfig('fof2', 'foF2 Critical Freq', 'foF2 (MHz)', '#ff6384'),
+    'IONOSONDE_HMF2': createIonosondeConfig('hmf2', 'hmF2 Peak Height', 'hmF2 (km)', '#ff9f40'),
+    'IONOSONDE_FOE': createIonosondeConfig('foe', 'foE Critical Freq', 'foE (MHz)', '#9966ff'),
+    'IONOSONDE_FOF1': createIonosondeConfig('fof1', 'foF1 Critical Freq', 'foF1 (MHz)', '#ffcd56'),
+    'IONOSONDE_HME': createIonosondeConfig('hme', 'hmE Peak Height', 'hmE (km)', '#c9cbcf')
 };

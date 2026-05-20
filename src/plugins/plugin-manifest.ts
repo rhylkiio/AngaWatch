@@ -314,18 +314,6 @@ export const pluginManifest: PluginDescriptor[] = [
     defaultConfig: { enabled: true, order: 350 },
   },
   {
-    configKey: 'XRayFluxMonitor',
-    ossImport: () => import('./x-ray-flux-monitor/x-ray-status'),
-    ossClassName: 'XRayFluxMonitor',
-    defaultConfig: { enabled: true, order: 32 }, // Set to high priority for Events menu
-  },
-  {
-    configKey: 'TartSrbMonitor',
-    ossImport: () => import('./tart-srb-monitor/tart-srb-status'),
-    ossClassName: 'TartSrbMonitor',
-    defaultConfig: { enabled: true, order: 33 },
-  },
-  {
     configKey: 'SeismicActivityPlugin',
     proImport: undefined,
     proClassName: 'SeismicActivityPlugin',

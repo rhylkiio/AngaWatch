@@ -9,7 +9,7 @@ export const spaceWeatherGroups: SpaceWeatherGroup[] = [
   {
     name: 'TART',
     header: 'TART Radio Telescopes',
-    list: ['TART-Kenya'], // You can add 'TART-South-Africa', etc., here later
+    list: ['TART-Kenya'],
     topLink: {
       name: 'Active TART Stations',
       badge: '1 Online'
@@ -27,10 +27,18 @@ export const spaceWeatherGroups: SpaceWeatherGroup[] = [
   {
     name: 'IONOSONDE',
     header: 'Ionospheric Monitors',
-    list: ['IONOSONDE-Malindi'],
+    list: [
+      'IONOSONDE-Malindi',
+      'IONOSONDE-Malindi-2',
+      'IONOSONDE-Malindi-3',
+      'IONOSONDE-Malindi-4',
+      'IONOSONDE-Malindi-5',
+      'IONOSONDE-Malindi-6',
+      'IONOSONDE-Malindi-7' // Added hmE
+    ],
     topLink: {
       name: 'Active Ionosondes',
-      badge: '1 Online'
+      badge: '7 Online'
     }
   }
 ];

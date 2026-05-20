@@ -32,7 +32,7 @@ export class TartSrbMonitor extends KeepTrackPlugin {
     bottomIconImg = radioIcon;
 
     sideMenuElementName = 'tart-srb-monitor-menu';
-    sideMenuTitle = 'Live SRB Detection (TART TUK)';
+    sideMenuTitle = 'TART TUK';
     sideMenuElementHtml: string = html`
     <div id="tart-srb-monitor-menu" class="side-menu-parent start-hidden">
         <div class="side-menu">
