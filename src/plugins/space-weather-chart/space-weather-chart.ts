@@ -137,6 +137,7 @@ export class SpaceWeatherChartPlugin extends KeepTrackPlugin {
         if (family && SENSOR_CHART_CONFIGS[family]) {
             this.activeSensor_ = sensor.sensorId;
             this.activeFamily_ = family;
+            this.setBottomIconToEnabled();
 
             if (this.isMenuButtonActive) {
                 if (!this.chart_) this.initChart();

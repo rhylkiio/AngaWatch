@@ -130,10 +130,6 @@ export class SpaceWeatherListPlugin extends KeepTrackPlugin implements ICommandP
 
     sm.setSensor(targetSensor);
 
-    if (targetSensor.sensorId === 'GOES-XRAY') {
-      EventBus.getInstance().emit('OPEN_SPACE_WEATHER_CHART' as any, targetSensor.sensorId);
-    }
-
     try {
       keepTrackApi.getMainCamera().lookAtLatLon(targetSensor.lat, targetSensor.lon, targetSensor.zoom ?? ZoomValue.GEO, ServiceLocator.getTimeManager().selectedDate);
     } catch (e) {

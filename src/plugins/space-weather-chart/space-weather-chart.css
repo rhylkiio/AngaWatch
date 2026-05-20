@@ -53,12 +53,21 @@
 
 /* Make the SW Chart icon visible as a light/grey icon when inactive */
 #unified-sw-chart-bottom-icon:not(.bmenu-item-selected):not(.bmenu-item-disabled) img,
-.drawer-utility-icon[data-plugin-id="unified-sw-chart-bottom-icon"] img {
-    filter: invert(1) brightness(0.9) saturate(0.2);
+.drawer-utility-icon[data-plugin-id="unified-sw-chart-bottom-icon"]:not(.bmenu-item-selected):not(.bmenu-item-disabled) img {
+    filter: invert(1) brightness(0.9) saturate(0.2) !important;
 }
 
+/* Make the SW Chart icon clearly disabled when unavailable */
 #unified-sw-chart-bottom-icon.bmenu-item-disabled img,
 .drawer-utility-icon[data-plugin-id="unified-sw-chart-bottom-icon"].bmenu-item-disabled img {
-    filter: invert(1) brightness(0.6) saturate(0) grayscale(1);
-    opacity: 0.35;
+    filter: invert(1) brightness(0.6) saturate(0) grayscale(1) !important;
+    opacity: 0.35 !important;
+}
+
+/* Apply the red filter to the solar flare icon when active/open */
+#unified-sw-chart-bottom-icon.bmenu-item-selected img,
+.drawer-utility-icon[data-plugin-id="SpaceWeatherChartPlugin"].bmenu-item-selected img,
+.drawer-utility-icon[data-plugin-id="SpaceWeatherChartPlugin"].selected img {
+    filter: invert(18%) sepia(100%) saturate(7414%) hue-rotate(359deg) brightness(94%) contrast(117%) !important;
+    opacity: 1 !important;
 }
