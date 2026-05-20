@@ -149,7 +149,7 @@ export class SpaceWeatherListPlugin extends KeepTrackPlugin implements ICommandP
       <h5>${group.header}</h5>
       ${topLink}
       ${sensors.map((s: any) => html`
-        <li class="menu-selectable" data-sensor="${s.sensorId}">
+        <li class="menu-selectable" data-sensor="${s.sensorId}" ${s.description ? `title="${s.description}"` : ''}>
           <span>${s.uiName}</span>
           <span>${s.system}</span>
           <span class="sw-item-actions">

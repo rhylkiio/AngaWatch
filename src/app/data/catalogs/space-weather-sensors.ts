@@ -55,86 +55,93 @@ export const spaceWeatherSensors: Record<string, any> = {
   // --- IONOSONDE SENSORS ---
   'IONOSONDE-Malindi': {
     sensorId: 'IONOSONDE-Malindi',
-    uiName: 'Maximum Usable Frequency (MUF(3000)F2)',
+    uiName: 'MUF(3000)F2 (Maximum Usable Frequency)',
     objName: 'Malindi-Ionosonde',
     type: 'Ground Station',
-    system: 'IONOSONDE_MUF3000F2', // Updated to unique config key
-    operator: 'KSA',
+    system: 'IONOSONDE_MUF3000F2',
+    operator: 'SANSA',
     lat: -2.996,
     lon: 40.113,
     zoom: 0.1,
-    hasTelemetry: true
+    hasTelemetry: true,
+    description: 'Represents the highest HF frequency (in MHz) that can be propagated via the F2 layer over a 3000 km path. A key parameter for HF radio link planning.'
   },
   'IONOSONDE-Malindi-2': {
     sensorId: 'IONOSONDE-Malindi-2',
-    uiName: 'Propagation Factor (M(3000)F2)',
+    uiName: 'M(3000)F2 (Propagation Factor)',
     objName: 'Malindi-Ionosonde',
     type: 'Ground Station',
-    system: 'IONOSONDE_M3000F2', // Updated to unique config key
-    operator: 'KSA',
+    system: 'IONOSONDE_M3000F2',
+    operator: 'SANSA',
     lat: -2.996,
     lon: 40.113,
     zoom: 0.1,
-    hasTelemetry: true
+    hasTelemetry: true,
+    description: 'Ratio used to estimate the maximum usable frequency (MUF) for a 3000 km HF radio path based on foF2. Indicates ionospheric refraction capability for long-distance communication.'
   },
   'IONOSONDE-Malindi-3': {
     sensorId: 'IONOSONDE-Malindi-3',
     uiName: 'foF2 (F2 Layer Critical Frequency)',
     objName: 'Malindi-Ionosonde',
     type: 'Ground Station',
-    system: 'IONOSONDE_FOF2', // Updated to unique config key
-    operator: 'KSA',
+    system: 'IONOSONDE_FOF2',
+    operator: 'SANSA',
     lat: -2.996,
     lon: 40.113,
     zoom: 0.1,
-    hasTelemetry: true
+    hasTelemetry: true,
+    description: 'Displays foF2 measurements derived from ionosonde data, reflecting peak electron density in the F2 layer used to assess ionospheric conditions affecting HF communication, enabling detection of disturbances and evaluation of maximum usable frequencies (MUF) for radio links.'
   },
   'IONOSONDE-Malindi-4': {
     sensorId: 'IONOSONDE-Malindi-4',
     uiName: 'hmF2 (Peak height of the F2 layer)',
     objName: 'Malindi-Ionosonde',
     type: 'Ground Station',
-    system: 'IONOSONDE_HMF2', // Updated to unique config key
-    operator: 'KSA',
+    system: 'IONOSONDE_HMF2',
+    operator: 'SANSA',
     lat: -2.996,
     lon: 40.113,
     zoom: 0.1,
-    hasTelemetry: true
+    hasTelemetry: true,
+    description: 'Displays the variation of the F2-layer peak height (HmF2) over time, representing the altitude of maximum electron density in the ionosphere. Changes in HmF2 reflect ionospheric dynamics influenced by solar radiation, geomagnetic activity, and atmospheric tides.'
   },
   'IONOSONDE-Malindi-5': {
     sensorId: 'IONOSONDE-Malindi-5',
     uiName: 'foE (E-Layer Critical Frequency)',
     objName: 'Malindi-Ionosonde',
     type: 'Ground Station',
-    system: 'IONOSONDE_FOE', // Updated to unique config key
-    operator: 'KSA',
+    system: 'IONOSONDE_FOE',
+    operator: 'SANSA',
     lat: -2.996,
     lon: 40.113,
     zoom: 0.1,
-    hasTelemetry: true
+    hasTelemetry: true,
+    description: 'Displays the maximum frequency (in MHz) that can be reflected by the ionospheric E layer. Indicates the ionization level of the E region, mainly influenced by solar radiation and time of day.'
   },
   'IONOSONDE-Malindi-6': {
     sensorId: 'IONOSONDE-Malindi-6',
     uiName: 'foF1 (F1-Layer Critical Frequency)',
     objName: 'Malindi-Ionosonde',
     type: 'Ground Station',
-    system: 'IONOSONDE_FOF1', // Updated to unique config key
-    operator: 'KSA',
+    system: 'IONOSONDE_FOF1',
+    operator: 'SANSA',
     lat: -2.996,
     lon: 40.113,
     zoom: 0.1,
-    hasTelemetry: true
+    hasTelemetry: true,
+    description: 'Represents the highest frequency (in MHz) reflected by the F1 layer during daytime. Useful for monitoring mid-ionospheric ionization variations driven by solar zenith angle and seasonal changes.'
   },
   'IONOSONDE-Malindi-7': {
     sensorId: 'IONOSONDE-Malindi-7',
     uiName: 'hmE (E-Layer Peak Height)',
     objName: 'Malindi-Ionosonde',
     type: 'Ground Station',
-    system: 'IONOSONDE_HME', // Added missing hmE config
-    operator: 'KSA',
+    system: 'IONOSONDE_HME',
+    operator: 'SANSA',
     lat: -2.996,
     lon: 40.113,
     zoom: 0.1,
-    hasTelemetry: true
+    hasTelemetry: true,
+    description: 'Shows the true altitude (in km) of maximum electron density in the E layer. Varies with solar radiation, time of day, and atmospheric dynamics.'
   }
 };
