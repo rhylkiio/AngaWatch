@@ -86,7 +86,7 @@
     "@babel/preset-typescript": "^7.23.0",
     "@playwright/test": "^1.58.2",
     "@rspack/cli": "^1.4.11",
-    "@rspack/core": "^1.4.11",
+    "@rspack/core": "^2.0.3",
     "@testing-library/dom": "^9.3.3",
     "@testing-library/user-event": "^14.5.2",
     "@types/agent-base": "^4.2.2",
