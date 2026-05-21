@@ -19,6 +19,8 @@ import {
   TleLine1,
   TleLine2,
 } from '@ootk/src/main';
+import { EventBus } from '../../engine/events/event-bus';
+import { EventBusEvent } from '../../engine/events/event-bus-events';
 import { SettingsManager } from '../../settings/settings';
 import { Planet } from '../objects/planet';
 import { apiFetch } from './api-fetch';
@@ -425,14 +427,6 @@ export class CatalogLoader {
       dotsManager.resetForCatalogSwap();
       colorSchemeManager.resetForCatalogSwap();
 
-      // Remove stars from staticSet to prevent injectStarData_ from adding duplicates
-      // on repeated catalog swaps (injectStarData_ pushes into staticSet every time)
-      const catalogManager = ServiceLocator.getCatalogManager();
-
-      catalogManager.staticSet = catalogManager.staticSet.filter(
-        (obj: { type?: SpaceObjectType }) => obj.type !== SpaceObjectType.STAR,
-      );
-
       // Re-parse the catalog via existing pipeline
       // Must pass as externalCatalog because parse() uses `externalCatalog || asciiCatalog`
       // and externalCatalog defaults to Promise.resolve([]) which is truthy, discarding keepTrackAscii
@@ -606,11 +600,6 @@ export class CatalogLoader {
       dotsManager.resetForCatalogSwap();
       colorSchemeManager.resetForCatalogSwap();
 
-      // Remove stars from staticSet to prevent duplicates
-      catalogManager.staticSet = catalogManager.staticSet.filter(
-        (obj: { type?: SpaceObjectType }) => obj.type !== SpaceObjectType.STAR,
-      );
-
       // Re-parse via the primary pipeline (keepTrackTle path preserves metadata)
       await CatalogLoader.parse({
         keepTrackTle: merged,
@@ -677,12 +666,6 @@ export class CatalogLoader {
 
       dotsManager.resetForCatalogSwap();
       colorSchemeManager.resetForCatalogSwap();
-
-      const catalogManager = ServiceLocator.getCatalogManager();
-
-      catalogManager.staticSet = catalogManager.staticSet.filter(
-        (obj: { type?: SpaceObjectType }) => obj.type !== SpaceObjectType.STAR,
-      );
 
       await CatalogLoader.parse({
         keepTrackTle: data,
@@ -1222,6 +1205,10 @@ export class CatalogLoader {
   }
 
   private static processAllSats_(resp: KeepTrackTLEFile[], i: number, catalogManagerInstance: CatalogManager, tempObjData: BaseObject[], notionalSatNum: number): void {
+    if (typeof resp[i]?.name !== 'string') {
+      errorManagerInstance.debug(`Catalog entry ${i} (SCC ${resp[i]?.sccNum ?? 'unknown'}) is missing 'name'; using placeholder`);
+      resp[i].name = `Unknown ${resp[i]?.sccNum ?? i}`;
+    }
     if (settingsManager.isStarlinkOnly && resp[i].name.indexOf('STARLINK') === -1) {
       return;
     }

@@ -2,6 +2,84 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [v12.2.7](https://github.com/thkruz/keeptrack.space/compare/v12.2.6...v12.2.7)
+
+>  
+
+- fix(mesh-manager): guard draw and drawOcclusion against uninitialized renderer [`#1345`](https://github.com/thkruz/keeptrack.space/pull/1345)
+- v12.2.5 [`#1344`](https://github.com/thkruz/keeptrack.space/pull/1344)
+- v12.2.4 [`#1334`](https://github.com/thkruz/keeptrack.space/pull/1334)
+- v12.2.3 [`#1330`](https://github.com/thkruz/keeptrack.space/pull/1330)
+- Develop [`#1321`](https://github.com/thkruz/keeptrack.space/pull/1321)
+- v12.2.0 [`#1310`](https://github.com/thkruz/keeptrack.space/pull/1310)
+- v12.1.3 [`#1303`](https://github.com/thkruz/keeptrack.space/pull/1303)
+- v12.1.2 [`#1298`](https://github.com/thkruz/keeptrack.space/pull/1298)
+- v12.1.1 [`#1297`](https://github.com/thkruz/keeptrack.space/pull/1297)
+- v12.1.0 [`#1296`](https://github.com/thkruz/keeptrack.space/pull/1296)
+- v12.0.15 [`#1295`](https://github.com/thkruz/keeptrack.space/pull/1295)
+- v12.0.3 [`#1294`](https://github.com/thkruz/keeptrack.space/pull/1294)
+- v12.0.12 [`#1293`](https://github.com/thkruz/keeptrack.space/pull/1293)
+- v12.0.9 [`#1290`](https://github.com/thkruz/keeptrack.space/pull/1290)
+- v12.0.8 [`#1286`](https://github.com/thkruz/keeptrack.space/pull/1286)
+- v12.0.7 [`#1284`](https://github.com/thkruz/keeptrack.space/pull/1284)
+- v12.0.5 [`#1280`](https://github.com/thkruz/keeptrack.space/pull/1280)
+- v12.0.4 [`#1279`](https://github.com/thkruz/keeptrack.space/pull/1279)
+- Version 12.0.2 [`#1277`](https://github.com/thkruz/keeptrack.space/pull/1277)
+- Version 12 [`#1271`](https://github.com/thkruz/keeptrack.space/pull/1271)
+- fix(catalog-loader): :bug: tolerate keepTrackTle entries with missing name [`#1349`](https://github.com/thkruz/keeptrack.space/issues/1349)
+- refactor(missile-manager): :recycle: refactor missile manager code into an actual class [`#914`](https://github.com/thkruz/keeptrack.space/issues/914)
+- fix(color-cruncher-thread-manager): enhance postMessage to support transferable objects and add error handling [`#1342`](https://github.com/thkruz/keeptrack.space/issues/1342)
+- fix(dots-manager): guard updatePosVel against null positionData and velocityData [`#1340`](https://github.com/thkruz/keeptrack.space/issues/1340)
+- fix(mesh-manager): guard draw and drawOcclusion against uninitialized renderer [`#1338`](https://github.com/thkruz/keeptrack.space/issues/1338)
+- fix(rendering): :bug: improve GPU picking framebuffer management and add tests for lifecycle [`#1347`](https://github.com/thkruz/keeptrack.space/issues/1347)
+- test(missile-manager): :white_check_mark: Add unit tests for missileManager functionality and input validation [`866b76a`](https://github.com/thkruz/keeptrack.space/commit/866b76a91efc7f0a934ebb52be6666d4af84f59c)
+- feat(rcs-estimator): :sparkles: add RCS estimator with catalog mining and vmag-derived fallback [`cb0e160`](https://github.com/thkruz/keeptrack.space/commit/cb0e160ab1858d9cff3b9a8b42b70dd755a8b6b8)
+- feat(visual-magnitude): :sparkles: switch to standard magnitude with viridis palette and quantile bucketing [`a8eb239`](https://github.com/thkruz/keeptrack.space/commit/a8eb23940b7b28b32dcce492cc0f6eaeabdbf29c)
+- feat(std-mag-estimator): :sparkles: add intrinsic-magnitude estimator with catalog/preset/Lambert-sphere cascade [`2ee6cb0`](https://github.com/thkruz/keeptrack.space/commit/2ee6cb093e2fba1aa0c660b16d14a62b9639af45)
+- feat(rcs-color-scheme): :sparkles: plasma palette, quantile bucketing, estimator integration, main-thread routing [`fc40d6c`](https://github.com/thkruz/keeptrack.space/commit/fc40d6c437ffc01ec22c2a38e9e7982db6523591)
+- feat(error-manager): :sparkles: enhance error reporting with structured context and cross-origin handling [`491e05e`](https://github.com/thkruz/keeptrack.space/commit/491e05e6021d7e5ae52d92fbfabaa7106db91627)
+- feat(sat-info-box-object): :sparkles: add apparent magnitude row and (est.) provenance via the new estimators [`1d1cc0b`](https://github.com/thkruz/keeptrack.space/commit/1d1cc0bf1e4dfc6e70e33b09f400434eb1a19e04)
+- feat(color-schemes): add countryOther flag to SourceColorScheme and update sunlightFov color definition; implement legend slug contract tests [`8833df2`](https://github.com/thkruz/keeptrack.space/commit/8833df237c23e8097987aea5026bf038dc55d19a)
+- fix(input-manager): :bug: add picking support checks and error handling for readPixels [`46a5159`](https://github.com/thkruz/keeptrack.space/commit/46a5159903bb19a85bbb9fb5107f108894d0aaeb)
+- chore(color-settings): :wrench: refresh palette colors and bump cache version to invalidate stale localStorage [`b50fb36`](https://github.com/thkruz/keeptrack.space/commit/b50fb36f0c6599248a9e6ec12d8c0c2833b6cc30)
+- fix(color-scheme-manager): :bug: persist scheme selection for worker-supported schemes [`e9f985d`](https://github.com/thkruz/keeptrack.space/commit/e9f985d522ab3e939ace33ede9ae15e59169caba)
+- ci(build-pipeline): :technologist: enhance job conditions for linting, building, and smoke tests [`d3cf1e7`](https://github.com/thkruz/keeptrack.space/commit/d3cf1e7f9ee8e1f3cb29f03dbc3c7018b306e8c6)
+
+#### [v12.2.6](https://github.com/thkruz/keeptrack.space/compare/v12.2.5...v12.2.6)
+
+>  
+
+- fix(rendering): :bug: add hasValidPose property to Box and Ellipsoid classes for pose validation [`#1346`](https://github.com/thkruz/keeptrack.space/issues/1346)
+- feat(plugins-pro): add module aliasing for plugins-pro and update imports [`87a4e4a`](https://github.com/thkruz/keeptrack.space/commit/87a4e4a56942330d24655d58015dc6d51c1c3e2f)
+- feat(tests): add comprehensive tests for EventBus.emitAsync functionality [`026939b`](https://github.com/thkruz/keeptrack.space/commit/026939b4d0fd60840afa2668da48eeb8e7234715)
+- chore(build-pipeline): upgrade actions/checkout and actions/setup-node to v6, update actions/cache to v5 [`d27ae43`](https://github.com/thkruz/keeptrack.space/commit/d27ae43910bc6c9038a6d4d6617d64d16d1cd610)
+- feat(tests): enhance CatalogLoader tests with EventBus listener verification [`8e7c3c9`](https://github.com/thkruz/keeptrack.space/commit/8e7c3c985da211e988c7d6d83fd5ea8d2476afad)
+- docs(changelog): update changelog for version 12.2.5 with recent changes [`f2aa2b8`](https://github.com/thkruz/keeptrack.space/commit/f2aa2b8921d648e815031aa399df7cab00a02747)
+- docs(event-bus): enhance beforeFilterTLEDatabase event description with idempotency details [`da0fd40`](https://github.com/thkruz/keeptrack.space/commit/da0fd40056783252c262d3dca397056fd7374272)
+- feat(event-bus): improve emitAsync to handle synchronous errors in listeners [`61057c0`](https://github.com/thkruz/keeptrack.space/commit/61057c05a370ea39f4b5cdce8eaab2fc3f84b981)
+- chore(README): update version badge to 12.2.5 [`f12a026`](https://github.com/thkruz/keeptrack.space/commit/f12a026018eae46b4c0be6917fecf60e6c2c746b)
+- feat(build-pipeline): add pull-requests write permission for compliance job [`eddc089`](https://github.com/thkruz/keeptrack.space/commit/eddc0896a4f1b9b48dd29c688ec42bfb9422864f)
+- chore(package-lock): update package-lock.json to reflect dependency changes [`84e9450`](https://github.com/thkruz/keeptrack.space/commit/84e94504bc1139244f4ad32561374ab719ec288d)
+
+#### [v12.2.5](https://github.com/thkruz/keeptrack.space/compare/v12.2.4...v12.2.5)
+
+>  
+
+- chore(deps): :wrench: bump resizable from 1.2.1 to 2.0.0 [`#1328`](https://github.com/thkruz/keeptrack.space/pull/1328)
+- chore(deps-dev): :wrench: bump style-loader from 3.3.4 to 4.0.0 [`#1329`](https://github.com/thkruz/keeptrack.space/pull/1329)
+- refactor(imports): remove importPro utility and update dynamic imports to use native import [`54e85f3`](https://github.com/thkruz/keeptrack.space/commit/54e85f395b310c8b7ffdaf60e1c4db4e83038430)
+- feat(build-pipeline): add lint-and-test-oss job for OSS contributors without plugins-pro [`eed6ad1`](https://github.com/thkruz/keeptrack.space/commit/eed6ad17c0b2b368b5049bf5ae54ea494cb4d04a)
+- feat(catalog-loader): integrate EventBus for static catalog data injection [`940b9e4`](https://github.com/thkruz/keeptrack.space/commit/940b9e427c83326930c2ebcbb4e52f8385c02105)
+- docs(changelog): :memo: update changelog for version 12.2.4 with recent changes [`409b13c`](https://github.com/thkruz/keeptrack.space/commit/409b13ca79d93acd3eac805ccb75b015e420809e)
+- feat(vitest): add stub for plugins-pro in Vitest configuration [`a2c78fd`](https://github.com/thkruz/keeptrack.space/commit/a2c78fdf25891c1eace39650d39b03856ce91056)
+- feat(plugins-pro): add ambient fallback declaration for optional submodule [`b39d7bc`](https://github.com/thkruz/keeptrack.space/commit/b39d7bc7a67c0e3d4736a43c72209a4312288534)
+- feat(event-bus): add beforeFilterTLEDatabase event and async emit method [`822959b`](https://github.com/thkruz/keeptrack.space/commit/822959b1da68f29d4c9a7b74f8e46d1b8a94fb03)
+- feat(vitest): enhance stub-plugins-pro to support async resolution [`e30de30`](https://github.com/thkruz/keeptrack.space/commit/e30de30720f326efde7c8e48b7622421b1cf766d)
+- fix(errorManager): improve regex test for TypeError in isExternalFetchError_ method [`5c9f2a2`](https://github.com/thkruz/keeptrack.space/commit/5c9f2a2f6de35a859fc225abba7a3d74aefb1892)
+- fix(plugin-manager): update login requirement check to ensure only gating pro usage [`3790114`](https://github.com/thkruz/keeptrack.space/commit/379011479920732cdb4b2f50a152798a068006e1)
+- docs(README): update version badge to 12.2.4 [`3f1db55`](https://github.com/thkruz/keeptrack.space/commit/3f1db55f2bd5751d90400d5d902f1430df3f91f2)
+- fix(catalog-loader): :bug: improve error message handling in injectStarData_ method [`50b603a`](https://github.com/thkruz/keeptrack.space/commit/50b603aba1f9d557b3bb1f380b2c07be4196dbb9)
+
 #### [v12.2.4](https://github.com/thkruz/keeptrack.space/compare/v12.2.3...v12.2.4)
 
 >  
