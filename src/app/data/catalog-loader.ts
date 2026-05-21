@@ -19,8 +19,6 @@ import {
   TleLine1,
   TleLine2,
 } from '@ootk/src/main';
-import { EventBus } from '../../engine/events/event-bus';
-import { EventBusEvent } from '../../engine/events/event-bus-events';
 import { SettingsManager } from '../../settings/settings';
 import { Planet } from '../objects/planet';
 import { apiFetch } from './api-fetch';
