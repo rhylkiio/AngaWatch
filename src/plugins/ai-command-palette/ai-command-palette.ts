@@ -14,6 +14,7 @@ import { calcGmst, eci2lla, RAD2DEG, Satellite, SpaceObjectType } from '@ootk/sr
 import { CloudsToggle } from '../clouds-toggle/clouds-toggle';
 import { GraticuleToggle } from '../graticule-toggle/graticule-toggle';
 import { NightToggle } from '../night-toggle/night-toggle';
+import { CameraType } from '@app/engine/camera/camera-type';
 import { PoliticalMapToggle } from '../political-map-toggle/political-map-toggle';
 export class AiCommandPalettePlugin extends KeepTrackPlugin {
     readonly id = 'AiCommandPalettePlugin';
@@ -366,6 +367,7 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
         // ONLY thing controlling the AI. Add new features just by typing them here!
         const systemPrompt = `You are Dira's AI assistant for the KeepTrack astrodynamics platform.
                 You MUST respond with ONLY a valid raw JSON object. Do not include markdown formatting or conversational text.
+                For 'find' actions, the 'target' property MUST be ONLY the satellite name or the raw 5-digit NORAD ID. Do not include labels like 'ID' or 'NORAD'
 
                 CRITICAL: ONLY USE THESE EXACT JSON KEYS: "action", "country", "type", "status", "orbit", "size", "location". Do not invent new keys.
                 For "country", ALWAYS output the official country NOUN (e.g., "China", not "Chinese").
@@ -462,17 +464,27 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
                 // --- FIND COMMAND ---
                 if (cmd.action === 'find') {
                     const searchManager = ServiceLocator.getUiManager().searchManager;
-                    searchManager.doSearch(cmd.target, true);
 
-                    const resultsCount = settingsManager.lastSearchResults?.length || 0;
+                    // 1. Clean the target: remove non-numeric labels, whitespace, etc.
+                    // This handles "NORAD ID 25544", "25544", or "The ISS (25544)"
+                    const rawTarget = String(cmd.target);
+                    const cleanTarget = rawTarget.replace(/NORAD|ID|target|the|\(|\)/gi, '').trim();
 
-                    if (resultsArea) {
-                        if (resultsCount > 0) {
-                            resultsArea.innerHTML += `<div style="color: #8bc34a; padding: 5px;">Found and focused: <b>${cmd.target}</b></div>`;
-                        } else {
-                            resultsArea.innerHTML += `<div style="color: #f44336; padding: 5px;">Could not find: <b>${cmd.target}</b></div>`;
+                    // 2. Perform the search with the cleaned string
+                    searchManager.doSearch(cleanTarget, true);
+
+                    // 3. Small delay to allow the searchManager to process the async search
+                    setTimeout(() => {
+                        const resultsCount = settingsManager.lastSearchResults?.length || 0;
+
+                        if (resultsArea) {
+                            if (resultsCount > 0) {
+                                resultsArea.innerHTML += `<div style="color: #8bc34a; padding: 5px;">Found and focused: <b>${cleanTarget}</b></div>`;
+                            } else {
+                                resultsArea.innerHTML += `<div style="color: #f44336; padding: 5px;">Could not find: <b>${cleanTarget}</b></div>`;
+                            }
                         }
-                    }
+                    }, 500);
                 }
 
                 // --- TOGGLE LAYER COMMAND ---
@@ -505,6 +517,37 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
                                 resultsArea.innerHTML += `<div style="color: #ff9800; padding: 5px;">⚠️ The '${cmd.layer}' layer is not currently loaded.</div>`;
                             }
                         }
+                    }
+                }
+                // --- RESET ALL COMMAND ---
+                else if (cmd.action === 'reset_all') {
+                    const catalogManager = ServiceLocator.getCatalogManager();
+                    const uiManager = ServiceLocator.getUiManager();
+                    const searchManager = uiManager.searchManager;
+                    const camera = ServiceLocator.getMainCamera();
+                    const orbitManager = ServiceLocator.getOrbitManager();
+
+                    // 1. Clear search and reset view
+                    searchManager.doSearch("", true);
+
+                    // 2. Clear orbits - This fixes the "value is never read" error!
+                    orbitManager.clearInViewOrbit();
+                    orbitManager.clearHoverOrbit();
+
+                    // 3. Reset Camera
+                    camera.cameraType = CameraType.FIXED_TO_EARTH;
+                    camera.state.isPanReset = true;
+                    camera.state.isLocalRotateReset = true;
+                    camera.state.zoomTarget = 0.5;
+
+                    // 4. Clear transient catalog state
+                    catalogManager.initObjects();
+
+                    // 5. Force a UI refresh
+                    EventBus.getInstance().emit(EventBusEvent.uiManagerFinal);
+
+                    if (resultsArea) {
+                        resultsArea.innerHTML = `<div style="color: #4caf50; padding: 5px;">🔄 <b>System Reset:</b> View restored and catalog cleared.</div>`;
                     }
                 }
 
