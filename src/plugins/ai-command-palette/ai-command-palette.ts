@@ -1,3 +1,6 @@
+import { SatMath } from '@app/app/analysis/sat-math';
+import { countryCodeList } from '@app/app/data/catalogs/countries';
+import { PluginRegistry } from '@app/engine/core/plugin-registry';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
@@ -5,19 +8,72 @@ import { KeepTrackPlugin } from '@app/engine/plugins/base-plugin';
 import { KeyboardComponent } from '@app/engine/plugins/components/keyboard/keyboard-component';
 import { html } from '@app/engine/utils/development/formatter';
 import { getEl } from '@app/engine/utils/get-el';
+import { settingsManager } from '@app/settings/settings';
 import { WebWorkerMLCEngine } from '@mlc-ai/web-llm';
-
+import { calcGmst, eci2lla, RAD2DEG, Satellite, SpaceObjectType } from '@ootk/src/main';
+import { CloudsToggle } from '../clouds-toggle/clouds-toggle';
+import { GraticuleToggle } from '../graticule-toggle/graticule-toggle';
+import { NightToggle } from '../night-toggle/night-toggle';
+import { PoliticalMapToggle } from '../political-map-toggle/political-map-toggle';
 export class AiCommandPalettePlugin extends KeepTrackPlugin {
     readonly id = 'AiCommandPalettePlugin';
     dependencies_ = ['TopMenu'];
 
     private aiWorker: Worker | null = null;
     private engine: WebWorkerMLCEngine | null = null;
-    // Centralize the model ID to ensure consistency between reload and create
-    private readonly SELECTED_MODEL = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC';
-
+    private readonly SELECTED_MODEL = 'Phi-3.5-mini-instruct-q4f16_1-MLC';
+    private isKeyboardSetup = false;
     private isModalOpen = false;
     private isAiEnabled = false;
+    private isAiLoading = false;
+
+
+
+    // Geographic bounding boxes for highly accurate airspace filtering
+    private readonly AIRSPACE_BOUNDS: Record<string, { minLat: number, maxLat: number, minLon: number, maxLon: number }> = {
+        // East Africa (Kenya, Tanzania, Uganda, Rwanda, Burundi)
+        "east-africa": { minLat: -11.0, maxLat: 5.0, minLon: 29.0, maxLon: 42.0 },
+
+        // Continents
+        // Replace your africa box with this wider one to catch more satellites
+        "africa": { minLat: -35.0, maxLat: 38.0, minLon: -20.0, maxLon: 55.0 },
+        "north-america": { minLat: 15.0, maxLat: 72.0, minLon: -170.0, maxLon: -52.0 },
+        "south-america": { minLat: -56.0, maxLat: 13.0, minLon: -82.0, maxLon: -34.0 },
+        "europe": { minLat: 34.0, maxLat: 72.0, minLon: -10.0, maxLon: 45.0 },
+        "asia": { minLat: -10.0, maxLat: 78.0, minLon: 60.0, maxLon: 180.0 },
+        "australia": { minLat: -45.0, maxLat: -10.0, minLon: 110.0, maxLon: 155.0 }
+    };
+
+    /**
+     * Converts natural language ("Italian", "USA") into KeepTrack catalog codes ("IT", "US")
+     */
+    /**
+     * Converts natural language ("Italian", "USA", "American") into KeepTrack catalog codes ("IT", "US")
+     */
+    private getCountryCode(searchName: string): string {
+        if (!searchName || searchName === 'none') return '';
+        const searchUpper = searchName.toUpperCase().trim();
+
+        // 1. Quick fallbacks for common adjectives the AI might use
+        if (searchUpper === 'USA' || searchUpper === 'AMERICAN' || searchUpper === 'UNITED STATES') return 'US';
+        if (searchUpper === 'UK' || searchUpper === 'BRITISH') return 'UK';
+        if (searchUpper === 'CHINA' || searchUpper === 'CHINESE') return 'PRC';
+        if (searchUpper === 'RUSSIA' || searchUpper === 'RUSSIAN') return 'RU';
+
+        // 2. Search KeepTrack's native countryCodeList mapping
+        // 2. Search KeepTrack's native countryCodeList mapping
+        for (const [countryName, codes] of Object.entries(countryCodeList)) {
+            if (countryName.toUpperCase() === searchUpper) {
+                return codes;
+            }
+
+            const splitCodes = codes.toUpperCase().split('|');
+            if (splitCodes.includes(searchUpper)) {
+                return codes; // <-- CHANGE THIS: Return the whole 'I|IT' string
+            }
+        }
+        return '';
+    }
 
     addHtml(): void {
         super.addHtml();
@@ -26,12 +82,56 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
             const uiWrapper = getEl('ui-wrapper');
 
             const paletteHtml = html`
-        <div id="ai-palette-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 9998; backdrop-filter: blur(3px);"></div>
+        <style>
+          #ai-palette-modal {
+            transition: box-shadow 0.3s ease;
+          }
+          #ai-palette-close {
+            margin-left: 15px;
+            color: #666;
+            font-size: 1.8rem;
+            line-height: 0.5;
+            cursor: pointer;
+            transition: color 0.2s ease;
+          }
+          #ai-palette-close:hover {
+            color: #f44336; /* Matches the KeepTrack destructive/red theme */
+          }
 
-        <div id="ai-palette-modal" style="display: none; position: fixed; top: 15%; left: 50%; transform: translateX(-50%); width: 600px; max-width: 90vw; background: var(--color-dark-ui-bg, #1e1e1e); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; border: 1px solid #333; display: flex; flex-direction: column;">
+          #ai-palette-modal.ai-active {
+            border-color: transparent !important;
+            box-shadow: 0 10px 40px rgba(255, 0, 0, 0.15);
+          }
 
-          <div style="display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #333;">
-            <input id="ai-palette-input" type="text" placeholder="Search satellites or type a command..." autocomplete="off" style="flex-grow: 1; border: none; background: transparent; color: #fff; font-size: 1.2rem; outline: none; margin: 0; border-bottom: none; box-shadow: none;" />
+          #ai-palette-modal.ai-active::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: conic-gradient(from 0deg, transparent 70%, #ff0000 90%, transparent 100%);
+            animation: spin-light 3s linear infinite;
+            z-index: 0;
+          }
+
+          #ai-palette-modal.ai-active::after {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: var(--color-dark-ui-bg, #1e1e1e);
+            border-radius: 7px;
+            z-index: 1;
+          }
+
+          @keyframes spin-light {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+
+        <div id="ai-palette-modal" style="display: none; position: fixed; top: 15%; left: 50%; transform: translateX(-50%); width: 600px; max-width: 90vw; background: var(--color-dark-ui-bg, #1e1e1e); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 9999; border: 1px solid #333; flex-direction: column; overflow: hidden;">
+
+          <div id="ai-palette-header" style="position: relative; z-index: 2; display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #333; cursor: move; user-select: none;">
+            <input id="ai-palette-input" type="text" placeholder="Search satellites or type a command..." autocomplete="off" style="flex-grow: 1; width: 100%; border: none; background: transparent; color: #fff; font-size: 1.2rem; outline: none; margin: 0; border-bottom: none; box-shadow: none;" />
 
             <div class="switch" style="margin-left: 15px;">
               <label style="color: #aaa; font-size: 0.9rem;">
@@ -40,10 +140,12 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
                 <span class="lever"></span>
               </label>
             </div>
+
+            <div id="ai-palette-close" title="Close Palette">&times;</div>
           </div>
 
-          <div id="ai-palette-results" style="max-height: 400px; overflow-y: auto; padding: 10px;">
-            </div>
+          <div id="ai-palette-results" style="position: relative; z-index: 2; max-height: 400px; overflow-y: auto; padding: 10px;">
+          </div>
 
         </div>
       `;
@@ -51,6 +153,7 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
             uiWrapper?.insertAdjacentHTML('beforeend', paletteHtml);
         });
     }
+
     addJs(): void {
         super.addJs();
 
@@ -58,30 +161,72 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
             this.setupSearchHijack();
             this.setupKeyboardShortcuts();
             this.setupPaletteListeners();
+            this.setupDraggable();
+        });
+    }
+
+    private setupDraggable(): void {
+        const modal = getEl('ai-palette-modal');
+        const header = getEl('ai-palette-header');
+
+        if (!modal || !header) return;
+
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+
+        header.addEventListener('mousedown', (e) => {
+            if (e.target instanceof HTMLInputElement || (e.target as HTMLElement).closest('.switch')) return;
+
+            isDragging = true;
+            const rect = modal.getBoundingClientRect();
+
+            modal.style.left = `${rect.left}px`;
+            modal.style.top = `${rect.top}px`;
+            modal.style.transform = 'none';
+            modal.style.margin = '0';
+
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            modal.style.left = `${e.clientX - startX}px`;
+            modal.style.top = `${e.clientY - startY}px`;
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
         });
     }
 
     private setupSearchHijack(): void {
-        const originalSearch = getEl('search') as HTMLInputElement;
+        const trigger = getEl('drawer-search-trigger');
 
-        if (originalSearch) {
-            originalSearch.addEventListener('focus', (e) => {
+        if (trigger) {
+            const label = trigger.querySelector('.drawer-search-label');
+            if (label) {
+                label.textContent = 'AI Search…';
+            }
+
+            trigger.addEventListener('click', (e) => {
                 e.preventDefault();
-                // 1. Immediately remove focus so the standard SearchManager doesn't take over
-                originalSearch.blur();
-                // 2. Open our spotlight modal
                 this.openPalette();
             });
         }
     }
 
     private setupKeyboardShortcuts(): void {
-        // Allows Cmd+K or Ctrl+K to open the palette from anywhere
+        if (this.isKeyboardSetup) return;
+        this.isKeyboardSetup = true;
+
         const keyboard = new KeyboardComponent(this.id, [
             {
-                key: 'k',
+                key: 'K',
                 ctrl: true,
-                // Removed the 'e' parameter to match KeepTrack's strict callback signature
+                shift: true,
                 callback: () => {
                     this.togglePalette();
                 },
@@ -97,7 +242,6 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
         keyboard.init();
     }
 
-    // Add this missing helper method to handle the toggling logic
     private togglePalette(): void {
         if (this.isModalOpen) {
             this.closePalette();
@@ -107,22 +251,26 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
     }
 
     private setupPaletteListeners(): void {
-        const overlay = getEl('ai-palette-overlay');
+        const modal = getEl('ai-palette-modal');
         const input = getEl('ai-palette-input') as HTMLInputElement;
         const toggle = getEl('ai-palette-toggle') as HTMLInputElement;
+        const closeBtn = getEl('ai-palette-close'); // 1. Grab the new button
 
-        // Close when clicking outside the modal
-        overlay?.addEventListener('click', () => this.closePalette());
-
-        // Handle AI Toggle
+        // 2. Handle the click to close the UI
+        closeBtn?.addEventListener('click', () => {
+            this.closePalette();
+        });
         toggle?.addEventListener('change', (e) => {
             this.isAiEnabled = (e.target as HTMLInputElement).checked;
+
             if (this.isAiEnabled) {
+                modal?.classList.add('ai-active');
                 this.initializeWebLLM();
+            } else {
+                modal?.classList.remove('ai-active');
             }
         });
 
-        // Handle User Input Submission
         input?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const query = input.value.trim();
@@ -131,20 +279,18 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
                 if (this.isAiEnabled) {
                     this.processAiCommand(query);
                 } else {
-                    // Fallback to standard search if AI is off
                     this.processStandardSearch(query);
                 }
             }
         });
     }
+
     private openPalette(): void {
         this.isModalOpen = true;
-        const overlay = getEl('ai-palette-overlay');
         const modal = getEl('ai-palette-modal');
         const input = getEl('ai-palette-input') as HTMLInputElement;
 
-        if (overlay && modal && input) {
-            overlay.style.display = 'block';
+        if (modal && input) {
             modal.style.display = 'flex';
             input.focus();
         }
@@ -152,133 +298,307 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
 
     private closePalette(): void {
         this.isModalOpen = false;
-        const overlay = getEl('ai-palette-overlay');
         const modal = getEl('ai-palette-modal');
 
-        if (overlay && modal) {
-            overlay.style.display = 'none';
+        if (modal) {
             modal.style.display = 'none';
         }
     }
 
     private processStandardSearch(query: string): void {
-        // If AI is off, we can route the string back to the standard SearchManager
         this.closePalette();
-        const searchManager = ServiceLocator.getUiManager().searchManager; // or via PluginRegistry
+        const searchManager = ServiceLocator.getUiManager().searchManager;
         searchManager.openSearch(true);
         searchManager.doSearch(query);
     }
 
-    // --- AI Integration Stubs ---
-
-    // Note: This is now an async function!
     private async initializeWebLLM(): Promise<void> {
+        if (this.isAiLoading || this.engine) return;
+        this.isAiLoading = true;
+
         const resultsArea = getEl('ai-palette-results');
         if (resultsArea) {
-            resultsArea.innerHTML = `<div style="color: #00bcd4; padding: 10px;">Initializing WebLLM Web Worker (This may download a ~2GB model on first run)...</div>`;
+            resultsArea.innerHTML = `<div style="color: #00bcd4; padding: 10px;">Initializing Dira AI (first run requires a ~2.4GB download)...</div>`;
         }
 
         try {
-            // 1. Create the standard worker. Note: type: 'module' may be required depending on your bundler setup.
             this.aiWorker = new Worker('/js/ai-palette-worker.js', { type: 'module' });
-            // 2. Wrap it in WebLLM's official proxy engine
             this.engine = new WebWorkerMLCEngine(this.aiWorker);
 
-            // 3. Pipe the loading progress to the UI
             this.engine.setInitProgressCallback((progress) => {
                 if (resultsArea) {
                     resultsArea.innerHTML = `<div style="color: #aaa; padding: 10px;">${progress.text}</div>`;
                 }
             });
 
-            // 4. Load the model
-            await this.engine.reload(this.SELECTED_MODEL); // ~400MB
+            await this.engine.reload(this.SELECTED_MODEL);
 
             if (resultsArea) {
-                resultsArea.innerHTML = `<div style="color: #8bc34a; padding: 10px;">AI Ready! Type a command above.</div>`;
+                resultsArea.innerHTML = `<div style="color: #8bc34a; padding: 10px;">Dira AI Ready! Type a command above.</div>`;
             }
         } catch (error) {
+            this.engine = null;
             if (resultsArea) {
-                resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">Worker Error: ${error}</div>`;
+                resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">Dira AI failed: ${error}</div>`;
             }
+        } finally {
+            this.isAiLoading = false;
         }
     }
 
     private async processAiCommand(prompt: string): Promise<void> {
         const resultsArea = getEl('ai-palette-results');
-        if (!this.engine) return;
+        if (!this.engine) {
+            if (resultsArea) {
+                resultsArea.innerHTML = `<div style="color: #ff9800; padding: 10px;">⚠️ Dira AI is still loading. Please wait a moment!</div>`;
+            }
+            return;
+        }
 
         if (resultsArea) {
             resultsArea.innerHTML = `<div style="color: #aaa; padding: 10px;">Thinking: "${prompt}"...</div>`;
         }
 
-        const systemPrompt = `You are an AI assistant built into the KeepTrack.space astrodynamics platform.
-    Your job is to translate natural language into structured application commands.
-    Respond ONLY with a JSON array of command objects.
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
 
-    Available commands:
-    1. Find a satellite: { "action": "find", "target": "<satellite_name_or_id>" }
-    2. Toggle a UI layer: { "action": "toggle_layer", "layer": "<sensor|grid|clouds|atmosphere>", "state": <boolean> }`;
+        // Because we removed the grammar enforcer, this English prompt is now the
+        // ONLY thing controlling the AI. Add new features just by typing them here!
+        const systemPrompt = `You are Dira's AI assistant for the KeepTrack astrodynamics platform.
+                You MUST respond with ONLY a valid raw JSON object. Do not include markdown formatting or conversational text.
 
+                CRITICAL: ONLY USE THESE EXACT JSON KEYS: "action", "country", "type", "status", "orbit", "size", "location". Do not invent new keys.
+                For "country", ALWAYS output the official country NOUN (e.g., "China", not "Chinese").
+
+                Valid Filter Values:
+                - type: 'debris', 'rocket', 'payload', 'none'
+                - status: 'active', 'inactive', 'none'
+                - orbit: 'LEO', 'MEO', 'GEO', 'HEO', 'none'
+                - size: 'small', 'medium', 'large', 'none'
+
+                EXAMPLES:
+
+                User: "Find all the small chinese debris in LEO"
+                {"commands": [{"action": "filter", "country": "China", "type": "debris", "status": "none", "orbit": "LEO", "size": "small", "location": "none"}]}
+
+                User: "Show me active American payloads"
+                {"commands": [{"action": "filter", "country": "United States", "type": "payload", "status": "active", "orbit": "none", "size": "none", "location": "none"}]}
+
+                User: "Turn off the clouds"
+                {"commands": [{"action": "toggle_layer", "layer": "clouds", "state": false}]}
+
+                User: "Find the ISS"
+                {"commands": [{"action": "find", "target": "ISS"}]}`;
         try {
-            // We can now call the AI exactly like the OpenAI API, but it runs locally in the worker!
             const response = await this.engine.chat.completions.create({
                 model: this.SELECTED_MODEL,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: prompt }
                 ],
-                response_format: { type: 'json_object' },
-                temperature: 0.1,
+                // WE DELETED response_format ENTIRELY!
+                temperature: 0.1, // Keep it low so the AI stays analytical and doesn't get creative
+                max_tokens: 150,
             });
+
+            clearTimeout(timeout);
 
             const rawJson = response.choices[0].message.content;
             if (rawJson) {
                 this.executeAiCommands(rawJson);
             }
-        } catch (error) {
-            if (resultsArea) resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">AI Processing Error.</div>`;
+        } catch (error: any) {
+            clearTimeout(timeout);
+            if (resultsArea) {
+                const isTimeout = error?.name === 'AbortError';
+                resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">
+                    ${isTimeout ? '⏱️ Dira AI timed out.' : `AI Error: ${error}`}
+                </div>`;
+            }
         }
     }
 
     private executeAiCommands(jsonString: string): void {
         const resultsArea = getEl('ai-palette-results');
 
-        try {
-            // The AI might return an object with an array, or just an array. Standardize it.
-            const parsed = JSON.parse(jsonString);
-            const commands = Array.isArray(parsed) ? parsed : (parsed.commands || []);
+        console.log("🤖 Raw AI Output:", jsonString);
 
-            if (resultsArea) resultsArea.innerHTML = ''; // Clear "Thinking..." text
+        try {
+            let cleaned = jsonString;
+
+            // 1. The Bulletproof JSON Extractor
+            const startIdx = cleaned.indexOf('{');
+            const endIdx = cleaned.lastIndexOf('}');
+
+            if (startIdx !== -1 && endIdx !== -1) {
+                cleaned = cleaned.substring(startIdx, endIdx + 1);
+            } else {
+                throw new Error("No JSON object found in response");
+            }
+
+            // 2. The Flexible JSON Parser
+            const parsedJson = JSON.parse(cleaned);
+            let commands: any[] = [];
+
+            // Did the AI follow instructions and use the commands array?
+            if (parsedJson.commands && Array.isArray(parsedJson.commands)) {
+                commands = parsedJson.commands;
+            }
+            // Did the AI just return a raw array? [ {action...} ]
+            else if (Array.isArray(parsedJson)) {
+                commands = parsedJson;
+            }
+            // Did the AI just return a single bare object? { action... }
+            else if (parsedJson.action) {
+                commands = [parsedJson]; // Wrap it in an array for them!
+            } else {
+                throw new Error("Could not understand the JSON structure.");
+            }
+
+            if (resultsArea) resultsArea.innerHTML = '';
 
             commands.forEach((cmd: any) => {
+
+                // --- FIND COMMAND ---
                 if (cmd.action === 'find') {
-                    // Utilize KeepTrack's existing SearchManager to find the object
                     const searchManager = ServiceLocator.getUiManager().searchManager;
-                    searchManager.doSearch(cmd.target, true); // true = prevent dropdown
+                    searchManager.doSearch(cmd.target, true);
+
+                    const resultsCount = settingsManager.lastSearchResults?.length || 0;
 
                     if (resultsArea) {
-                        resultsArea.innerHTML += `<div style="color: #fff; padding: 5px;">🔍 Searching for: <b>${cmd.target}</b></div>`;
+                        if (resultsCount > 0) {
+                            resultsArea.innerHTML += `<div style="color: #8bc34a; padding: 5px;">Found and focused: <b>${cmd.target}</b></div>`;
+                        } else {
+                            resultsArea.innerHTML += `<div style="color: #f44336; padding: 5px;">Could not find: <b>${cmd.target}</b></div>`;
+                        }
                     }
                 }
+
+                // --- TOGGLE LAYER COMMAND ---
                 else if (cmd.action === 'toggle_layer') {
-                    // You can expand this to use KeepTrack's specific UI toggles
+                    const layerMap: Record<string, any> = {
+                        'political_map': PoliticalMapToggle,
+                        'clouds': CloudsToggle,
+                        'grid': GraticuleToggle,
+                        'night': NightToggle
+                    };
+
+                    const PluginClass = layerMap[cmd.layer];
+
+                    if (PluginClass) {
+                        const plugin = PluginRegistry.getPlugin(PluginClass) as any;
+
+                        if (plugin) {
+                            if (typeof plugin.onBottomIconClick === 'function') {
+                                plugin.onBottomIconClick();
+                            } else if (typeof plugin.bottomMenuClicked === 'function') {
+                                plugin.bottomMenuClicked();
+                            }
+
+                            if (resultsArea) {
+                                const stateText = cmd.state ? 'Enabled' : 'Disabled';
+                                resultsArea.innerHTML += `<div style="color: #8bc34a; padding: 5px;">👁️ ${stateText} layer: <b>${cmd.layer}</b></div>`;
+                            }
+                        } else {
+                            if (resultsArea) {
+                                resultsArea.innerHTML += `<div style="color: #ff9800; padding: 5px;">⚠️ The '${cmd.layer}' layer is not currently loaded.</div>`;
+                            }
+                        }
+                    }
+                }
+
+                else if (cmd.action === 'filter') {
+                    const catalogManager = ServiceLocator.getCatalogManager();
+                    const timeManager = ServiceLocator.getTimeManager();
+                    const searchManager = ServiceLocator.getUiManager().searchManager;
+
+                    let matches: Satellite[] = catalogManager.getSats();
+
+                    // Pre-compute
+                    const reqType = cmd.type !== 'none' ? cmd.type?.toLowerCase() : null;
+                    const reqStatus = cmd.status !== 'none' ? cmd.status?.toLowerCase() : null;
+                    const reqOrbit = cmd.orbit !== 'none' ? cmd.orbit?.toUpperCase() : null;
+                    const reqSize = cmd.size !== 'none' ? cmd.size?.toLowerCase() : null; // Now this is read!
+
+                    let targetCountryCode: string | null = null;
+                    if (cmd.country && cmd.country !== 'none') {
+                        targetCountryCode = this.getCountryCode(cmd.country);
+                    }
+
+                    interface AirspaceZone { minLat: number; maxLat: number; minLon: number; maxLon: number; }
+                    const targetZone: AirspaceZone | null = (cmd.location && cmd.location !== 'none')
+                        ? (this.AIRSPACE_BOUNDS[cmd.location.toLowerCase()] || null)
+                        : null;
+
+                    const now = timeManager.simulationTimeObj;
+                    const { gmst } = calcGmst(now);
+
+                    matches = matches.filter((sat: Satellite) => {
+                        // 1. Type check
+                        if (reqType) {
+                            if (reqType.includes('debris') && sat.type !== SpaceObjectType.DEBRIS) return false;
+                            if (reqType.includes('rocket') && sat.type !== SpaceObjectType.ROCKET_BODY) return false;
+                            if (reqType.includes('payload') && sat.type !== SpaceObjectType.PAYLOAD) return false;
+                        }
+
+                        // 2. Country check
+                        if (targetCountryCode && !targetCountryCode.split('|').includes(sat.country)) return false;
+
+                        // 3. Status check
+                        if (reqStatus) {
+                            const isDebris = sat.type === SpaceObjectType.DEBRIS || sat.type === SpaceObjectType.ROCKET_BODY;
+                            const statusStr = sat.status ? String(sat.status).toUpperCase().trim() : '';
+                            const isExplicitlyAlive = ['+', 'P', 'B', 'S', 'X'].includes(statusStr) || statusStr.includes('OP');
+                            if (reqStatus === 'active' && (isDebris || !isExplicitlyAlive)) return false;
+                            if (reqStatus === 'inactive' && (!isDebris && isExplicitlyAlive)) return false;
+                        }
+
+                        // 4. Orbit check
+                        if (reqOrbit && sat.apogee) {
+                            if (reqOrbit === 'LEO' && sat.apogee > 2000) return false;
+                            if (reqOrbit === 'GEO' && (sat.apogee < 35000 || sat.apogee > 37000)) return false;
+                        }
+
+                        // 5. Size (RCS) check - THIS USES THE VARIABLE!
+                        if (reqSize && sat.rcs !== undefined && sat.rcs !== null) {
+                            // Small: < 0.1m^2 | Medium: 0.1 to 1.0m^2 | Large: > 1.0m^2
+                            if (reqSize === 'small' && sat.rcs >= 0.1) return false;
+                            if (reqSize === 'medium' && (sat.rcs < 0.1 || sat.rcs > 1.0)) return false;
+                            if (reqSize === 'large' && sat.rcs <= 1.0) return false;
+                        }
+
+                        // 6. Location check
+                        if (targetZone && sat.satrec) {
+                            const satPos = SatMath.getEci(sat, now);
+                            const lla = eci2lla(satPos.position, gmst);
+                            const lat = lla.lat * RAD2DEG;
+                            const lon = lla.lon * RAD2DEG;
+                            if (lat < targetZone.minLat || lat > targetZone.maxLat || lon < targetZone.minLon || lon > targetZone.maxLon) return false;
+                        }
+
+                        return true;
+                    });
+
+                    // Render results
                     if (resultsArea) {
-                        const stateText = cmd.state ? 'Enabled' : 'Disabled';
-                        resultsArea.innerHTML += `<div style="color: #fff; padding: 5px;">👁️ ${stateText} layer: <b>${cmd.layer}</b></div>`;
+                        if (matches.length > 0) {
+                            resultsArea.innerHTML += `<div style="color: #8bc34a; padding: 5px;">✅ Found ${matches.length} matching objects.</div>`;
+                            searchManager.doSearch(matches.map(s => s.sccNum).join(','), true);
+                        } else {
+                            resultsArea.innerHTML += `<div style="color: #f44336; padding: 5px;">❌ No matches found.</div>`;
+                        }
                     }
                 }
             });
 
-            // Clear the input box after successful execution
             const input = getEl('ai-palette-input') as HTMLInputElement;
             if (input) input.value = '';
 
         } catch (error) {
             if (resultsArea) {
-                resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">Failed to parse AI response.</div>`;
+                resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">Failed to parse AI response. Try rephrasing your command.</div>`;
             }
         }
     }
-
 }
