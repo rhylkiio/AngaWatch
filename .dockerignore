@@ -21,4 +21,3 @@ src/objects/__tests__/propagator-accuracy-summary.txt
 # These are essential to ensure a clean build context
 .dockerignore
 Dockerfile
-*.md
