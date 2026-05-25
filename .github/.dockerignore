@@ -1,0 +1,24 @@
+# GITIGNORE ---
+.idea
+.vscode
+coverage
+dist
+node_modules
+*.log
+.npmrc
+.claude
+.github
+test
+FUTURE-WORK.md
+circular-deps.svg
+.qodo
+src/fetch
+CLAUDE.md
+.dev.vars
+src/objects/__tests__/propagator-accuracy-summary.txt
+
+# --- DOCKER SPECIFICALLY ---
+# These are essential to ensure a clean build context
+.dockerignore
+Dockerfile
+*.md
