@@ -372,6 +372,11 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
                 CRITICAL: ONLY USE THESE EXACT JSON KEYS: "action", "country", "type", "status", "orbit", "size", "location". Do not invent new keys.
                 For "country", ALWAYS output the official country NOUN (e.g., "China", not "Chinese").
 
+                ALWAYS prioritize the 'filter' action for any request involving attributes (country, status, type, orbit, size, location).
+                ONLY use 'find' when searching for a specific, single object name (e.g., 'Find ISS').
+
+                CRITICAL: If a user asks for multiple satellites (e.g., 'all Italian satellites'), use the 'filter' action.
+
                 Valid Filter Values:
                 - type: 'debris', 'rocket', 'payload', 'none'
                 - status: 'active', 'inactive', 'none'
