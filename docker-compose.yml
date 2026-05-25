@@ -1,36 +1,8 @@
 services:
   dira:
-    image: dira:latest
+    build:
+      context: .
+      target: prod # Defaults to the production stage
     container_name: dira-prod
     ports:
       - "80:80"
-    restart: unless-stopped
-
-    # 1. Healthcheck: Docker will verify the app is actually serving content
-    # Note: 'curl' must be installed in the Nginx image.
-    # If this fails, consider using 'wget -q --spider http://localhost/index.html'
-    healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/index.html" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-    # 2. Resource limits
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-
-    # 3. Security and Logging
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /var/cache/nginx
-      - /var/run
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
