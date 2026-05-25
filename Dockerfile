@@ -8,6 +8,8 @@ RUN npm install
 # --- Stage 2: Development ---
 FROM base AS dev
 # Installs nodemon or other dev tools if needed
+# Ensure the container has the dev dependencies if needed
+RUN npm install
 CMD ["npm", "run", "dev"]
 
 # --- Stage 3: Build (Production-ready) ---

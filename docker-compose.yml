@@ -2,7 +2,6 @@ services:
   dira:
     build:
       context: .
-      target: prod
     container_name: dira-prod
     env_file:
       - .env # Tells Docker to load variables from this file

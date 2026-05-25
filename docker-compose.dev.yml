@@ -1,0 +1,12 @@
+services:
+  dira:
+    build:
+      target: dev
+    container_name: dira-dev
+    ports:
+      - "3000:3000" # Development port
+    volumes:
+      - .:/app      # Binds your local code to the container
+      - /app/node_modules # Prevents local node_modules from overwriting container's
+    environment:
+      - NODE_ENV=development
