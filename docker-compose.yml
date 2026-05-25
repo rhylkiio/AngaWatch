@@ -2,7 +2,9 @@ services:
   dira:
     build:
       context: .
-      target: prod # Defaults to the production stage
+      target: prod
     container_name: dira-prod
+    env_file:
+      - .env # Tells Docker to load variables from this file
     ports:
       - "80:80"
