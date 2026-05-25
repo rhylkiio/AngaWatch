@@ -84,6 +84,21 @@ export const countryCodeList = {
   'Uruguay': 'UY|URY',
   'Venezuela': 'VE|VENZ',
   'Vietnam': 'VN|VTNM',
+  //Added missing countries
+  'Angola': 'AO',
+  'Cameroon': 'CM',
+  'Czechia': 'CZ',
+  'Democratic Republic of the Congo': 'CD',
+  'Ethiopia': 'ET',
+  'Iceland': 'IS',
+  'Kenya': 'KE',
+  'North Macedonia': 'MK',
+  'Oman': 'OM',
+  'Qatar': 'QA',
+  'Rwanda': 'RW',
+  'Serbia': 'RS',
+  'Tajikistan': 'TJ',
+  'Uzbekistan': 'UZ',
 };
 
 export const countryFlagIconMap = {
@@ -692,6 +707,10 @@ export const getCountryMapList = () => ({
   'VENZ': t7e('countries.VENZ'),
   'VTNM': t7e('countries.VTNM'),
   'TBD': t7e('countries.TBD'),
+  // Add any additional mappings here
+  'MK': t7e('countries.MK'),
+  'RS': t7e('countries.RS'),
+
 });
 
 export const launchSiteMap: Record<string, {

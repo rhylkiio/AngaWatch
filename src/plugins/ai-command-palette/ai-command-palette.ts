@@ -20,6 +20,7 @@
  */
 import { SatMath } from '@app/app/analysis/sat-math';
 import { countryCodeList } from '@app/app/data/catalogs/countries';
+import { CameraType } from '@app/engine/camera/camera-type';
 import { PluginRegistry } from '@app/engine/core/plugin-registry';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { EventBus } from '@app/engine/events/event-bus';
@@ -34,7 +35,6 @@ import { calcGmst, eci2lla, RAD2DEG, Satellite, SpaceObjectType } from '@ootk/sr
 import { CloudsToggle } from '../clouds-toggle/clouds-toggle';
 import { GraticuleToggle } from '../graticule-toggle/graticule-toggle';
 import { NightToggle } from '../night-toggle/night-toggle';
-import { CameraType } from '@app/engine/camera/camera-type';
 import { PoliticalMapToggle } from '../political-map-toggle/political-map-toggle';
 export class AiCommandPalettePlugin extends KeepTrackPlugin {
     readonly id = 'AiCommandPalettePlugin';
@@ -82,7 +82,6 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
         if (searchUpper === 'RUSSIA' || searchUpper === 'RUSSIAN') return 'RU';
 
         // 2. Search KeepTrack's native countryCodeList mapping
-        // 2. Search KeepTrack's native countryCodeList mapping
         for (const [countryName, codes] of Object.entries(countryCodeList)) {
             if (countryName.toUpperCase() === searchUpper) {
                 return codes;
@@ -90,7 +89,7 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
 
             const splitCodes = codes.toUpperCase().split('|');
             if (splitCodes.includes(searchUpper)) {
-                return codes; // <-- CHANGE THIS: Return the whole 'I|IT' string
+                return codes;
             }
         }
         return '';
@@ -592,6 +591,10 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
                     let targetCountryCode: string | null = null;
                     if (cmd.country && cmd.country !== 'none') {
                         targetCountryCode = this.getCountryCode(cmd.country);
+                        if (!targetCountryCode) {
+                            if (resultsArea) resultsArea.innerHTML += `<div style="color: #f44336;">❌ Country "${cmd.country}" not recognized.</div>`;
+                            return;// Exit early
+                        }
                     }
 
                     interface AirspaceZone { minLat: number; maxLat: number; minLon: number; maxLon: number; }
