@@ -3,10 +3,11 @@ services:
     build:
       target: dev
     container_name: dira-dev
-    ports:
-      - "3000:3000" # Development port
+    # Use the correct script from your package.json:
+    command: npm run start
     volumes:
-      - .:/app      # Binds your local code to the container
-      - /app/node_modules # Prevents local node_modules from overwriting container's
+      - .:/app
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=development
