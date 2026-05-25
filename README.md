@@ -1,16 +1,21 @@
-![Latest Version](https://img.shields.io/badge/version-12.2.7-darkgreen?style=flat-square) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/thkruz/keeptrack.space?style=flat-square) ![language](https://img.shields.io/github/languages/top/thkruz/keeptrack.space?style=flat-square) ![Languages](https://img.shields.io/github/languages/count/thkruz/keeptrack.space?style=flat-square) ![GitHub issues](https://img.shields.io/github/issues/thkruz/keeptrack.space?style=flat-square) ![License](https://img.shields.io/github/license/thkruz/keeptrack.space?style=flat-square)
+[![Latest Version](https://img.shields.io/badge/version-12.2.7-darkgreen?style=flat-square)](https://github.com/rhylkiio/AngaWatch/releases)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/rhylkiio/AngaWatch?style=flat-square)](https://github.com/rhylkiio/AngaWatch/pulse)
+[![language](https://img.shields.io/github/languages/top/rhylkiio/AngaWatch?style=flat-square)](https://github.com/rhylkiio/AngaWatch)
+[![Languages](https://img.shields.io/github/languages/count/rhylkiio/AngaWatch?style=flat-square)](https://github.com/rhylkiio/AngaWatch)
+[![GitHub issues](https://img.shields.io/github/issues/rhylkiio/AngaWatch?style=flat-square)](https://github.com/rhylkiio/AngaWatch/issues)
+[![License](https://img.shields.io/github/license/rhylkiio/AngaWatch?style=flat-square)](https://github.com/rhylkiio/AngaWatch/blob/main/LICENSE)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./public/img/logo.png">
   <source media="(prefers-color-scheme: light)" srcset="./public/img/logo-light.png">
-  <img src="./public/img/logo.png" width='100%' alt="KeepTrack.Space">
+  <img src="./public/img/logo.png" width='100%' alt="DIRA - Dynamic Integrated Resources for Astrodynamics">
 </picture>
 
-# KeepTrack.space™
+# DIRA (Dynamic Integrated Resources for Astrodynamics)
 
-> Professional satellite tracking for everyone
+> Professional satellite tracking and orbital analysis. Based on KeepTrack™.
 
-**KeepTrack™** brings real orbital mechanics to students and educators. Used by [EPFL’s Cosmos Archaeology](https://keeptrack.space/projects/cosmos-archeology),
+**DIRA** is a specialized fork of KeepTrack™, bringing real orbital mechanics to students and educators. Used by [EPFL’s Cosmos Archaeology](https://keeptrack.space/projects/cosmos-archeology),
 [StarTalk](https://www.youtube.com/watch?v=H0jLiGAGtyg&t=130s), the [18th Space Defense Squadron](https://keeptrack.space/projects/operations-centers), and
 [ethicallyHackingspace](https://start.ethicallyhacking.space/), among many others.
 
@@ -22,7 +27,7 @@
 - 📱 Works on mobile, tablet, and desktop
 - 🆓 Free, open source, runs offline
 
-[Try it live](https://app.keeptrack.space) | [Installation](#installation) | [Join Discord](https://discord.gg/G4tJfSkmzx) | [Screenshots](#screenshots)
+[Try it live](https://angawatch.space) | [Installation](#installation) | [Join Discord](https://discord.gg/G4tJfSkmzx) | [Screenshots](#screenshots)
 
 ---
 
@@ -48,11 +53,11 @@
 
 # Project Overview
 
-Welcome to KeepTrack, an ambitious project aiming to make orbital analysis tools accessible to all. KeepTrack provides a simplified and streamlined experience for learning and
+Welcome to **DIRA**, an ambitious project based on KeepTrack aiming to make orbital analysis tools accessible to all. DIRA provides a simplified and streamlined experience for learning and
 interacting with satellites and space debris. Built from the ground up with custom WebGL 2.0 shaders, an internal orbital mechanics library, and a high-performance render loop,
 this is a lot more than just dots around a globe.
 
-**What makes KeepTrack unique:**
+**What makes DIRA unique:**
 
 - Built with performance-first architecture
 - No installation required—runs in any modern browser
@@ -61,9 +66,9 @@ this is a lot more than just dots around a globe.
 
 ---
 
-## Who is KeepTrack For?
+## Who is DIRA For?
 
-KeepTrack is used in operations centers, classrooms, and outreach programs around the world.
+DIRA is used in operations centers, classrooms, and outreach programs around the world.
 
 ### Operations Centers
 
@@ -81,7 +86,7 @@ KeepTrack is used in operations centers, classrooms, and outreach programs aroun
 
 ### Outreach
 
-- Embed KeepTrack on your website for free
+- Embed DIRA on your website for free
 - Show satellite designs in orbit before launch
 - Explain space sustainability and the debris problem
 - Create custom demos for public engagement
@@ -105,14 +110,14 @@ KeepTrack is used in operations centers, classrooms, and outreach programs aroun
 
 # Installation
 
-KeepTrack is automatically deployed to production and development environments:
+DIRA is hosted by our organization for public use:
 
-- **Production:** <https://keeptrack.space>
-- **Development:** <https://dev.keeptrack.space>
+- **Production:** <https://angawatch.space>
+- **GitHub Repository:** <https://github.com/rhylkiio/AngaWatch>
 
 ## Prerequisites
 
-To build KeepTrack locally, you need:
+To build DIRA locally, you need:
 
 - [Node.js](https://nodejs.org/) 18+ (`node --version` to check)
 - [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
@@ -122,8 +127,8 @@ To build KeepTrack locally, you need:
 
 ```bash
 # Clone the repository
-git clone https://github.com/thkruz/keeptrack.space
-cd keeptrack.space
+git clone https://github.com/rhylkiio/AngaWatch
+cd AngaWatch
 
 # Install dependencies
 npm install
@@ -179,7 +184,7 @@ The development server will automatically select an alternative port and display
 
 # Architecture
 
-KeepTrack is transitioning from a monolithic structure to a clean, layered architecture that separates the rendering engine from application-specific features.
+DIRA follows a clean, layered architecture inherited from KeepTrack that separates the rendering engine from application-specific features.
 
 ## Project Structure
 
@@ -283,7 +288,7 @@ We welcome contributions! Whether you're fixing bugs, adding features, improving
 ## Development Workflow
 
 1. **Fork** the repository to your GitHub account
-2. **Clone** your fork: `git clone https://github.com/YOUR-USERNAME/keeptrack.space`
+2. **Clone** your fork: `git clone https://github.com/YOUR-USERNAME/AngaWatch`
 3. **Create a branch**: `git checkout -b feature/my-awesome-feature`
 4. **Make changes** and test thoroughly
 5. **Run linting**: `npm run lint` (auto-fix with `npm run lint:fix`)
@@ -426,7 +431,7 @@ The feature set rivals those of expensive commercial toolkits, and includes:
 ## Integration
 
 - **Xbox controller** - Gamepad support for presentations
-- **Embed mode** - [Integrate KeepTrack](#deployment) into your website
+- **Embed mode** - Integrate DIRA into your website
 - **API access** - Programmatic control via JavaScript API
 - **Screenshot/video** - Built-in screen recording
 - **Custom catalogs** - Load your own TLE data
@@ -497,7 +502,7 @@ KeepTrack uses automated deployment via Cloudflare:
 
 # Contributors
 
-Special thanks to all contributors who have helped make KeepTrack better:
+DIRA is maintained by the AngaWatch community. Special thanks to the original KeepTrack contributors:
 
 - [@hkruczek](https://github.com/hkruczek/) - Features and testing
 - [@Le-Roi777](https://github.com/Le-Roi777/) - UI/UX design and implementation
@@ -510,12 +515,12 @@ Special thanks to all contributors who have helped make KeepTrack better:
 
 ## Original Work
 
-KeepTrack is based on the original [Things in Space](https://github.com/jeyoder/ThingsInSpace/) by [James Yoder](https://github.com/jeyoder/), released under the MIT License. While
+DIRA is based on **KeepTrack™**, which was based on the original Things in Space by James Yoder, released under the MIT License. While
 the codebase has been completely 100% rewritten with new architecture, we acknowledge and appreciate the foundational concept.
 
 ## Featured Users
 
-KeepTrack is proud to have been used by:
+The underlying KeepTrack™ engine is used by:
 
 - **Combined Space Operations Center** - U.S. Space Force operations
 - **Cosmos Archaeology** - University of Lausanne exhibitions in Switzerland and China
@@ -524,7 +529,7 @@ KeepTrack is proud to have been used by:
 - **Espace Ballon** - "Altitudes" exhibit with the short film "Human Debris in Space 1957-2024"
 - **Space Waste Lab** - Studio Roosegaarde art installation
 
-*Using KeepTrack in your project?* [Let us know!](mailto:admin@keeptrack.space)
+*Using DIRA in your project?* Let us know!
 
 ---
 
@@ -533,7 +538,7 @@ KeepTrack is proud to have been used by:
 KeepTrack™ and KeepTrack.space™ are trademarks of Kruczek Labs LLC.
 
 - ✅ You may use "KeepTrack" to refer to this software
-- ✅ You may say "powered by KeepTrack" or "based on KeepTrack"
+- ✅ DIRA is **based on KeepTrack™**
 - ❌ You may not use "KeepTrack" in your product name or domain
 - ❌ You may not imply endorsement without permission
 
@@ -543,9 +548,10 @@ KeepTrack™ and KeepTrack.space™ are trademarks of Kruczek Labs LLC.
 
 Copyright (C) 2025 Kruczek Labs LLC
 
-KeepTrack is licensed under the **GNU Affero General Public License v3.0 or later**.
+KeepTrack and DIRA are licensed under the **GNU Affero General Public License v3.0 or later**.
+Copyright (C) 2025 rhylkiio (AngaWatch)
 
-This means you can:
+This means you can use, modify, and distribute DIRA provided you:
 
 - ✅ Use KeepTrack for any purpose
 - ✅ Modify the source code
@@ -571,13 +577,13 @@ This means you can:
 
 ### ✅ Example 1: Educational Institution
 
-You fork KeepTrack, add custom plugins for your astronomy course, and host it on your university's public website for students.
+You fork DIRA, add custom plugins for your astronomy course, and host it on your university's public website for students.
 
 Allowed - You must make your modified source code available (e.g., via GitHub) and clearly state what you changed. Include AGPL license and credit original authors.
 
 ### ❌ Example 2: Commercial SaaS Platform
 
-You modify KeepTrack, rebrand it as "SatTracker Pro," and offer it as a paid subscription service without sharing your source code.
+You modify DIRA, rebrand it as "SatTracker Pro," and offer it as a paid subscription service without sharing your source code.
 
 Not allowed - Running modified AGPL software as a network service counts as distribution. You must provide source code to all users, even paying customers. The AGPL specifically
 prevents this "SaaS loophole." If this license obligation is violated, Kruczek Labs LLC may take legal action to enforce its intellectual property rights.
@@ -588,11 +594,11 @@ You add a new debris collision analysis plugin, publish it on GitHub under AGPL-
 
 Allowed and encouraged! - Your plugin is properly licensed, source is available, and you've contributed back to the community. This is exactly what the AGPL is designed to enable.
 
-For more details, see the [Full License](https://github.com/thkruz/keeptrack.space/blob/master/LICENSE) or visit <https://www.gnu.org/licenses/agpl-3.0.html>.
+For more details, see the Full License or visit <https://www.gnu.org/licenses/agpl-3.0.html>.
 
 ## Why AGPL?
 
-The AGPL ensures that improvements to KeepTrack remain open source, even when used as a web service. If you run a modified version, you must make your source code available to users.
+The AGPL ensures that improvements to DIRA remain open source, even when used as a web service. If you run a modified version, you must make your source code available to users.
 
 **Need a different license?** [Contact Kruczek Labs](mailto:admin@keeptrack.space) about commercial licensing options.
 
@@ -600,7 +606,7 @@ The AGPL ensures that improvements to KeepTrack remain open source, even when us
 
 # Use of AI
 
-KeepTrack uses AI-assisted development tools to maintain a large codebase with an international audience:
+DIRA uses AI-assisted development tools to maintain a large codebase with an international audience:
 
 - GitHub Copilot - Code acceleration and refactoring
 - Claude AI - Shader debugging and architecture troubleshooting
@@ -615,13 +621,13 @@ maintain quality at scale.
 
 For contributors: You are NOT required to use AI tools. Whether you code with Vim or Copilot, contributions are equally valued. We care about code quality, not your workflow.
 
-Disagree with this approach? You're free to fork and maintain your version of KeepTrack however you prefer. We respect all development philosophies.
+Disagree with this approach? You're free to fork and maintain your version of DIRA however you prefer. We respect all development philosophies.
 
 ---
 
 # Additional Resources
 
-- **Live Demo:** <https://app.keeptrack.space>
+- **Live Demo:** <https://angawatch.space>
 - **Documentation:** <https://docs.keeptrack.space>
 - **API Documentation:** <https://api.keeptrack.space/v4/docs>
 - **OOTK Library:** <https://github.com/thkruz/ootk>
@@ -629,13 +635,13 @@ Disagree with this approach? You're free to fork and maintain your version of Ke
 ---
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/thkruz">Theodore Kruczek</a> and <a href="#contributors">contributors</a>
+  Made by <a href="https://github.com/rhylkiio">rhylkiio</a>, <a href="https://github.com/thkruz">Theodore Kruczek</a> and <a href="#contributors">contributors</a>
 </p>
 
 <p align="center">
-  <a href="https://keeptrack.space">Website</a> •
+  <a href="https://angawatch.space">Website</a> •
   <a href="https://discord.gg/G4tJfSkmzx">Discord</a> •
-  <a href="https://github.com/thkruz/keeptrack.space/issues">Issues</a> •
-  <a href="https://github.com/thkruz/keeptrack.space/discussions">Discussions</a> •
+  <a href="https://github.com/rhylkiio/AngaWatch/issues">Issues</a> •
+  <a href="https://github.com/rhylkiio/AngaWatch/discussions">Discussions</a> •
   <a href="mailto:theodore.kruczek@gmail.com">Contact</a>
 </p>

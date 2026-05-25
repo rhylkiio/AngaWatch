@@ -19,6 +19,6 @@ export class GithubLinkPlugin extends TopMenuPlugin {
   }
 
   protected onClick_(): void {
-    window.open('https://github.com/thkruz/keeptrack.space/', '_blank', 'noopener,noreferrer');
+    window.open('https://github.com/rhylkiio/AngaWatch', '_blank', 'noopener,noreferrer');
   }
 }

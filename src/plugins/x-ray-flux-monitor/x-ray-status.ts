@@ -1,3 +1,24 @@
+/**
+ * DIRA (Dynamic Integrated Resources for Astrodynamics)
+ * Copyright (C) 2025 rhylkiio (AngaWatch)
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Based on KeepTrack™ (https://github.com/thkruz/keeptrack.space)
+ * Copyright (C) 2025 Kruczek Labs LLC
+ */
+
 import { MenuMode, ToastMsgType } from '@app/engine/core/interfaces';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { EventBus } from '@app/engine/events/event-bus';
@@ -109,10 +130,10 @@ export class XRayFluxMonitor extends KeepTrackPlugin {
             type: 'line',
             data: {
                 datasets: [
-                    { label: 'GOES-16 Long', borderColor: 'red', backgroundColor: 'red', data: [], borderWidth: 2, pointRadius: 0, normalized: true, parsing: false },
-                    { label: 'GOES-16 Short', borderColor: 'blue', backgroundColor: 'blue', data: [], borderWidth: 2, pointRadius: 0, normalized: true, parsing: false },
-                    { label: 'GOES-17 Long', borderColor: 'orange', backgroundColor: 'orange', data: [], borderWidth: 2, pointRadius: 0, normalized: true, parsing: false },
-                    { label: 'GOES-17 Short', borderColor: 'purple', backgroundColor: 'purple', data: [], borderWidth: 2, pointRadius: 0, normalized: true, parsing: false }
+                    { label: 'GOES-18 Long', borderColor: 'red', backgroundColor: 'red', data: [], borderWidth: 2, pointRadius: 0, normalized: true, parsing: false },
+                    { label: 'GOES-18 Short', borderColor: 'blue', backgroundColor: 'blue', data: [], borderWidth: 2, pointRadius: 0, normalized: true, parsing: false },
+                    { label: 'GOES-19 Long', borderColor: 'orange', backgroundColor: 'orange', data: [], borderWidth: 2, pointRadius: 0, normalized: true, parsing: false },
+                    { label: 'GOES-19 Short', borderColor: 'purple', backgroundColor: 'purple', data: [], borderWidth: 2, pointRadius: 0, normalized: true, parsing: false }
                 ]
             },
             options: {
