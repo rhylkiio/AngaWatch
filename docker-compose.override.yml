@@ -1,0 +1,13 @@
+services:
+  dira:
+    build:
+      target: dev
+    container_name: dira-dev
+    volumes:
+      - ./src:/app/src    # ← only mount src for hot reload, not entire /app
+      - /app/src/engine/ootk
+
+    ports:
+      - "5544:5544"
+    environment:
+      - NODE_ENV=development

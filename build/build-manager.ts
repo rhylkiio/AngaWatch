@@ -61,7 +61,7 @@ class BuildManager {
         // Merge locales files
         fileManager.mergeLocales('src', 'src/plugins-pro');
       } else {
-        fileManager.compileLocales('src');
+        fileManager.mergeLocales('src');
       }
 
       // Update version information

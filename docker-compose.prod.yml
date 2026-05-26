@@ -1,19 +1,20 @@
+# docker-compose.prod.yml
 services:
   dira:
     restart: unless-stopped
     mem_limit: 512m
     cpus: 0.5
+    ports:
+      - "80:80"
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost/index.html || exit 1" ]
+      test: ["CMD-SHELL", "curl -f http://localhost:5544 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /var/cache/nginx
-      - /var/run
+      start_period: 60s
+    volumes:
+      - ./src:/app/src
+      - /app/src/engine/ootk
     logging:
       driver: "json-file"
       options:

@@ -36,6 +36,8 @@ export class Lat2LonPlots extends KeepTrackPlugin {
   menuMode: MenuMode[] = [MenuMode.ANALYSIS, MenuMode.ALL];
 
   bottomIconImg = scatterPlot4Png;
+  bottomIconElementName = 'menu-lat2lon-plot';
+  bottomIconLabel = 'Lat/Lon Plot';
   bottomIconCallback = () => {
     const chartDom = getEl(this.plotCanvasId)!;
 
