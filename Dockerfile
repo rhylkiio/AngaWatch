@@ -1,5 +1,5 @@
 # --- Stage 1: Base (Common Dependencies) ---
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 RUN apk add --no-cache git
 WORKDIR /app
 COPY package*.json ./
@@ -20,8 +20,10 @@ RUN git submodule update --init --recursive --recommend-shallow || echo "Skippin
 RUN npm run build
 
 # --- Stage 4: Production (Nginx) ---
-FROM nginx:alpine AS prod
-# Copy only the compiled static files
-COPY --from=build /app/dist /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+FROM node:20-alpine AS prod
+WORKDIR /app
+RUN npm install -g serve    # lightweight static file server
+COPY --from=build /app/public ./public
+COPY --from=build /app/dist ./public
+EXPOSE 3000
+CMD ["serve", "-s", "public", "-l", "3000"]

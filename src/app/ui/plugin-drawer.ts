@@ -183,17 +183,17 @@ export class PluginDrawer {
     logoEl.id = 'nav-logo';
     logoEl.className = 'nav-logo';
     if (settingsManager.navBarLogoUrl && logoEl instanceof HTMLAnchorElement) {
-      logoEl.href = 'https://keeptrack.space';
+      logoEl.href = 'https://angawatch.space';
       logoEl.target = '_blank';
       logoEl.rel = 'noopener noreferrer';
-      logoEl.innerHTML = `<img src="${settingsManager.navBarLogoUrl}" alt="KeepTrack" />`;
+      logoEl.innerHTML = `<img src="${settingsManager.navBarLogoUrl}" alt="DIRA (Based on KeepTrack)" />`;
     }
 
     const navWrapper = getEl('nav-wrapper', true);
 
     if (this.isMobileMode_) {
       // Mobile: hamburger + compact logo in the nav bar (top-left)
-      logoEl.innerHTML = `<img src="${ktsOrangeLogoPng}" alt="KeepTrack" />`;
+      logoEl.innerHTML = `<img src="${ktsOrangeLogoPng}" alt="DIRA (Based on KeepTrack)" />`;
       navWrapper?.prepend(logoEl);
       navWrapper?.prepend(btn);
     } else {

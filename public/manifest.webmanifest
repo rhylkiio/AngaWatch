@@ -1,12 +1,15 @@
 {
   "id": "/",
-  "short_name": "KeepTrack",
-  "name": "KeepTrack",
-  "description": "3D Satellite Toolkit",
+  "short_name": "DIRA",
+  "name": "DIRA",
+  "description": "Dynamic Intergrated Resource for Astrodynamics",
   "lang": "en",
   "dir": "ltr",
   "orientation": "landscape",
-  "categories": ["education", "utilities"],
+  "categories": [
+    "education",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "./img/favicons/web-app-manifest-144x144.png",

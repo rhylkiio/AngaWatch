@@ -79,7 +79,7 @@ export class MobileManager {
             settingsManager.isShowPrimaryLogo = false;
             settingsManager.isShowSecondaryLogo = false;
           } else if (!settingsManager.isMobileModeEnabled) {
-            ServiceLocator.getUiManager().toast('Full Version of KeepTrack is not available on mobile devices. Please use a desktop browser to access the full version.',
+            ServiceLocator.getUiManager().toast('The full version of DIRA (Based on KeepTrack) is not available on mobile devices. Please use a desktop browser for the complete experience.',
               ToastMsgType.normal);
           }
 

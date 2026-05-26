@@ -90,7 +90,10 @@ export function renderStatusFooter(): void {
     `    <span class="drawer-status-dot${isOnline ? '' : ' drawer-status-dot--offline'}"></span>`,
     `    <span class="drawer-status-connectivity-label${isOnline ? '' : ' drawer-status-connectivity-label--offline'}">${isOnline ? 'Connected' : 'Offline'}</span>`,
     '  </div>',
-    `  <span class="drawer-status-version">KeepTrack v${__VERSION__}</span>`,
+    '  <div class="drawer-status-meta">',
+    `    <span class="drawer-status-version">DIRA v${__VERSION__}</span> | `,
+    '    <a class="drawer-status-source" href="https://github.com/rhylkiio/AngaWatch" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">Source</a>',
+    '  </div>',
     '</div>',
   ].join('');
 }

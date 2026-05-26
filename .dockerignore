@@ -23,7 +23,6 @@ yarn-error.log*
 lerna-debug.log*
 node_modules
 dist
-.git
 .env
 
 # Diagnostic reports (https://nodejs.org/api/report.html)

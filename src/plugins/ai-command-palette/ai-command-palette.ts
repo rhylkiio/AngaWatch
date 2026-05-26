@@ -72,28 +72,33 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
      * Converts natural language ("Italian", "USA", "American") into KeepTrack catalog codes ("IT", "US")
      */
     private getCountryCode(searchName: string): string {
-        if (!searchName || searchName === 'none') return '';
-        const searchUpper = searchName.toUpperCase().trim();
+    if (!searchName || searchName === 'none') return '';
+    const searchUpper = searchName.toUpperCase().trim();
 
-        // 1. Quick fallbacks for common adjectives the AI might use
-        if (searchUpper === 'USA' || searchUpper === 'AMERICAN' || searchUpper === 'UNITED STATES') return 'US';
-        if (searchUpper === 'UK' || searchUpper === 'BRITISH') return 'UK';
-        if (searchUpper === 'CHINA' || searchUpper === 'CHINESE') return 'PRC';
-        if (searchUpper === 'RUSSIA' || searchUpper === 'RUSSIAN') return 'RU';
+    // 1. Hardcoded Adjective Fallbacks
+    const fallbacks: Record<string, string> = {
+        'USA': 'US', 'AMERICAN': 'US', 'UNITED STATES': 'US',
+        'UK': 'UK', 'BRITISH': 'UK',
+        'CHINA': 'PRC', 'CHINESE': 'PRC',
+        'RUSSIA': 'RU', 'RUSSIAN': 'RU'
+    };
+    if (fallbacks[searchUpper]) return fallbacks[searchUpper];
 
-        // 2. Search KeepTrack's native countryCodeList mapping
-        for (const [countryName, codes] of Object.entries(countryCodeList)) {
-            if (countryName.toUpperCase() === searchUpper) {
-                return codes;
-            }
+    // 2. Search KeepTrack's native countryCodeList
+    for (const [countryName, codes] of Object.entries(countryCodeList)) {
+        // Exact match
+        if (countryName.toUpperCase() === searchUpper) return codes;
 
-            const splitCodes = codes.toUpperCase().split('|');
-            if (splitCodes.includes(searchUpper)) {
-                return codes;
-            }
-        }
-        return '';
+        // Code match (e.g., user types 'US' or 'USA')
+        if (codes.toUpperCase().split('|').includes(searchUpper)) return codes;
     }
+
+    // 3. Debugging/Fail-safe
+    console.warn(`[Dira AI] Could not resolve country code for: "${searchName}"`);
+
+    // RETURN 'NOT_FOUND' instead of '' to let the filter logic know this failed explicitly
+    return 'NOT_FOUND';
+}
 
     addHtml(): void {
         super.addHtml();
@@ -593,6 +598,7 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
                         targetCountryCode = this.getCountryCode(cmd.country);
                         if (!targetCountryCode) {
                             if (resultsArea) resultsArea.innerHTML += `<div style="color: #f44336;">❌ Country "${cmd.country}" not recognized.</div>`;
+
                             return;// Exit early
                         }
                     }

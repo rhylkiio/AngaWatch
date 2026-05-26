@@ -2,8 +2,9 @@ services:
   dira:
     build:
       context: .
+      target: prod
     container_name: dira-prod
     env_file:
       - .env # Tells Docker to load variables from this file
     ports:
-      - "80:80"
+      - "80:3000"

@@ -1,17 +1,14 @@
 services:
   dira:
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/index.html"]
+      test: [ "CMD-SHELL", "curl -f http://localhost/index.html || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
     read_only: true
     tmpfs:
       - /tmp

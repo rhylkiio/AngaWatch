@@ -38,7 +38,7 @@ export abstract class SplashScreen {
         <div id="logo-inner-container" class="valign">
           <div style="display: flex;">
           <!-- <span id="logo-text" class="logo-font">KEEP TRACK</span> -->
-          <img src="${logoPng}" alt="Keep Track" id="logo-text" class="logo-font">
+          <img src="${logoPng}" alt="DIRA (Based on KeepTrack)" id="logo-text" class="logo-font">
           <!-- <span id="logo-text-version" class="logo-font">10</span> -->
           </div>
           <div style="height: 50px; min-height: 50px; max-height: 50px; margin-top: 1rem; display: flex; align-items: center;">

@@ -3,11 +3,11 @@ services:
     build:
       target: dev
     container_name: dira-dev
-    # Use the correct script from your package.json:
     command: npm run start
     volumes:
       - .:/app
+      - /app/node_modules   # ← anonymous volume shields Linux node_modules
     ports:
-      - "3000:3000"
+      - "5544:5544" 
     environment:
       - NODE_ENV=development

@@ -89,7 +89,7 @@ export const countryCodeList = {
   'Cameroon': 'CM',
   'Czechia': 'CZ',
   'Democratic Republic of the Congo': 'CD',
-  'Ethiopia': 'ET',
+  'Ethiopia': 'ET|ETH|ETHIOPIA',
   'Iceland': 'IS',
   'Kenya': 'KE',
   'North Macedonia': 'MK',
@@ -707,10 +707,6 @@ export const getCountryMapList = () => ({
   'VENZ': t7e('countries.VENZ'),
   'VTNM': t7e('countries.VTNM'),
   'TBD': t7e('countries.TBD'),
-  // Add any additional mappings here
-  'MK': t7e('countries.MK'),
-  'RS': t7e('countries.RS'),
-
 });
 
 export const launchSiteMap: Record<string, {
