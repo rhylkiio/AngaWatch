@@ -9,8 +9,9 @@ RUN npm install
 FROM base AS dev
 # Installs nodemon or other dev tools if needed
 # Ensure the container has the dev dependencies if needed
-RUN npm install
-CMD ["npm", "run", "dev"]
+COPY . .
+RUN npm run build
+CMD ["npm", "run", "start"]
 
 # --- Stage 3: Build (Production-ready) ---
 FROM base AS build
