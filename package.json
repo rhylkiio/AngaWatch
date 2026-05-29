@@ -36,7 +36,7 @@
   "scripts": {
     "setenv": "npx tsx ./build/set-env.ts",
     "prebuild": "npx tsx ./build/get-submodules.ts && npx tsx ./build/generate-translation.ts",
-    "build": "npx tsx ./build/build-manager.ts production --profile=oss",
+    "build": "npx tsx ./build/build-manager.ts production",
     "build:pro": "npx tsx ./build/generate-translation.ts && npx tsx ./build/build-manager.ts production --profile=pro",
     "build:celestrak": "npx tsx ./build/generate-translation.ts && npx tsx ./build/build-manager.ts production --profile=celestrak",
     "build:embed": "npx tsx ./build/generate-translation.ts && npx tsx ./build/build-manager.ts production --profile=embed",

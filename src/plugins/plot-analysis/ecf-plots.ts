@@ -30,6 +30,8 @@ export class EcfPlot extends KeepTrackPlugin {
   menuMode: MenuMode[] = [MenuMode.ANALYSIS, MenuMode.ALL];
 
   bottomIconImg = scatterPlotPng;
+  bottomIconElementName = 'menu-ecf-plot';
+  bottomIconLabel = 'ECF Plot';
   bottomIconCallback = () => {
     if (!this.isMenuButtonActive) {
       return;

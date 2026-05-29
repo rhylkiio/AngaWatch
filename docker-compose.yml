@@ -3,8 +3,17 @@ services:
     build:
       context: .
       target: prod
+      args:
+        - KEEPTRACK_API_KEY=${KEEPTRACK_API_KEY}
+        - INFLUXDB_URL=${INFLUXDB_URL}
+        - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+        - INFLUXDB_ORG=${INFLUXDB_ORG}
+        - INFLUXDB_X_RAY_BUCKET=${INFLUXDB_X_RAY_BUCKET}
+        - INFLUXDB_TART_BUCKET=${INFLUXDB_TART_BUCKET}
+        - INFLUXDB_IONOSONDE_BUCKET=${INFLUXDB_IONOSONDE_BUCKET}
     container_name: dira-prod
     env_file:
       - .env # Tells Docker to load variables from this file
-    ports:
-      - "80:3000"
+    volumes:
+      - ./src:/app/src
+      - /app/src/engine/ootk

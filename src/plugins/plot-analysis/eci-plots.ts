@@ -30,6 +30,8 @@ export class EciPlot extends KeepTrackPlugin {
   menuMode: MenuMode[] = [MenuMode.ANALYSIS, MenuMode.ALL];
 
   bottomIconImg = scatterPlot2Png;
+  bottomIconElementName = 'menu-eci-plot';
+  bottomIconLabel = 'ECI Plot';           
   bottomIconCallback = () => {
     if (this.isMenuButtonActive) {
       this.createPlot(this.getPlotData(), getEl(this.plotCanvasId)!);

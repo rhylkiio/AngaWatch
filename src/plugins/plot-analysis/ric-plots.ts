@@ -33,6 +33,8 @@ export class RicPlot extends KeepTrackPlugin {
   menuMode: MenuMode[] = [MenuMode.ANALYSIS, MenuMode.ALL];
 
   bottomIconImg = scatterPlot3Png;
+  bottomIconElementName = 'menu-ric-plot';
+  bottomIconLabel = 'RIC Plot';
   bottomIconCallback = () => {
     if (this.selectSatManager_.selectedSat === -1) {
       ServiceLocator.getUiManager().toast(t7e('errorMsgs.SelectSatelliteFirst'), ToastMsgType.critical);
