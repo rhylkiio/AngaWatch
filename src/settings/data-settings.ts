@@ -22,7 +22,7 @@
  */
 export class DataSettings {
   // Data Sources
-  private readonly proxy = 'https://dira.ksa.go.ke/proxy?url=';
+  private readonly proxy = 'https://dira.ksa.go.ke/';
   dataSources = {
     /**
      * This is where the TLEs are loaded from

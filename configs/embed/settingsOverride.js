@@ -18,7 +18,7 @@
  */
 
 // Settings Manager Overrides
-const proxy = 'https://dira.ksa.go.ke/proxy?url=';
+const proxy = 'https://dira.ksa.go.ke/';
 
 const settingsOverride = {
   /*
