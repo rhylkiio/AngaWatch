@@ -22,7 +22,6 @@
  */
 export class DataSettings {
   // Data Sources
-  private readonly proxy = 'https://dira.ksa.go.ke/?url=';
   dataSources = {
     /**
      * This is where the TLEs are loaded from
@@ -31,7 +30,7 @@ export class DataSettings {
      *
      * It can be loaded from a local file or a remote source
      */
-    tle: `${this.proxy}${encodeURIComponent('https://api.keeptrack.space/v4/sats/celestrak')}`,
+    tle: 'https://api.keeptrack.space/v4/sats/celestrak',
     /** url for an external TLE source */
     externalTLEs: '',
     /**
@@ -39,13 +38,14 @@ export class DataSettings {
      * When set to `true`, the system will exclusively utilize external TLE data.
      * When set to `false`, the system may use internal or other sources of TLE data.
      */
+
     externalTLEsOnly: false,
-    tleDebris: `${this.proxy}${encodeURIComponent('https://app.keeptrack.space/tle/TLEdebris.json')}`,
-    vimpel: `${this.proxy}${encodeURIComponent('https://api.keeptrack.space/v4/r2/vimpel.json')}`,
-    stars: `${this.proxy}${encodeURIComponent('https://r2.keeptrack.space/data/star-catalog.json')}`,
-    constellations: `${this.proxy}${encodeURIComponent('https://r2.keeptrack.space/data/constellations.json')}`,
-    covariance: `${this.proxy}${encodeURIComponent('https://r2.keeptrack.space/data/covariance.json')}`,
-    orgs: `${this.proxy}${encodeURIComponent('https://r2.keeptrack.space/data/orgs.json')}`,
+    tleDebris: 'https://app.keeptrack.space/tle/TLEdebris.json',
+    vimpel: 'https://api.keeptrack.space/v4/r2/vimpel.json',
+    stars: 'https://r2.keeptrack.space/data/star-catalog.json',
+    constellations: 'https://r2.keeptrack.space/data/constellations.json',
+    covariance: 'https://r2.keeptrack.space/data/covariance.json',
+    orgs: 'https://r2.keeptrack.space/data/orgs.json',
     /**
      * URL of the McCants-format visual magnitude database (used by the VmagDatabasePlugin
      * to back-fill `sat.vmag` for satellites missing it from the primary TLE source).
@@ -54,7 +54,7 @@ export class DataSettings {
      * served from `public/data/`, or anywhere reachable via fetch.
      */
     vmagDatabase: '',
-    satDetail: `${this.proxy}${encodeURIComponent('https://api.keeptrack.space/v4/sat/')}`,
+    satDetail: 'https://api.keeptrack.space/v4/sat/',
     /** This determines if tle source is loaded to supplement externalTLEs  */
     isSupplementExternal: false,
   };
