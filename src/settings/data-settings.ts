@@ -22,7 +22,7 @@
  */
 export class DataSettings {
   // Data Sources
-  private readonly proxy = 'https://dira.ksa.go.ke/proxy?url=';
+  private readonly proxy = 'https://dira.ksa.go.ke/?url=';
   dataSources = {
     /**
      * This is where the TLEs are loaded from
@@ -31,7 +31,7 @@ export class DataSettings {
      *
      * It can be loaded from a local file or a remote source
      */
-    tle: 'https://api.keeptrack.space/v4/sats/celestrak',
+    tle: `${this.proxy}${encodeURIComponent('https://api.keeptrack.space/v4/sats/celestrak')}`,
     /** url for an external TLE source */
     externalTLEs: '',
     /**
@@ -54,7 +54,7 @@ export class DataSettings {
      * served from `public/data/`, or anywhere reachable via fetch.
      */
     vmagDatabase: '',
-    satDetail: 'https://api.keeptrack.space/v4/sat/',
+    satDetail: `${this.proxy}${encodeURIComponent('https://api.keeptrack.space/v4/sat/')}`,
     /** This determines if tle source is loaded to supplement externalTLEs  */
     isSupplementExternal: false,
   };

@@ -18,7 +18,7 @@
  */
 
 // Settings Manager Overrides
-const proxy = 'https://dira.ksa.go.ke/proxy?url=';
+const proxy = 'https://dira.ksa.go.ke/?url=';
 
 const settingsOverride = {
   /*
@@ -482,7 +482,7 @@ const settingsOverride = {
     },
   },
   dataSources: {
-    tle: 'https://api.keeptrack.space/v4/sats',
+    tle: `${proxy}${encodeURIComponent('https://api.keeptrack.space/v4/sats')}`,
     externalTLEsOnly: false,
     tleDebris: `${proxy}${encodeURIComponent('https://app.keeptrack.space/tle/TLEdebris.json')}`,
     vimpel: `${proxy}${encodeURIComponent('https://r2.keeptrack.space/vimpel.json')}`,

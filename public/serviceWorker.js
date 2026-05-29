@@ -65,6 +65,15 @@ self.addEventListener('fetch', (e) => {
 
   const url = new URL(e.request.url);
 
+  // Determine the actual destination URL (checking if it's proxied)
+  const targetUrlStr = url.searchParams.get('url') || e.request.url;
+  let targetUrl;
+  try {
+    targetUrl = new URL(targetUrlStr);
+  } catch (err) {
+    targetUrl = url;
+  }
+
   // Skip analytics/tracking
   if (url.hostname.includes('google') || url.hostname.includes('zaraz')) {
     return;
@@ -99,7 +108,7 @@ self.addEventListener('fetch', (e) => {
   // --- KeepTrack API data (TLE, stars, covariance): network-first with cache fallback ---
   // On first online visit the SW caches these responses. Offline, the cached copy is served
   // so the app never needs to fall back to local /tle/ files.
-  if (url.hostname === 'api.keeptrack.space' || url.hostname === 'r2.keeptrack.space' || url.hostname === 'app.keeptrack.space') {
+  if (targetUrl.hostname === 'api.keeptrack.space' || targetUrl.hostname === 'r2.keeptrack.space' || targetUrl.hostname === 'app.keeptrack.space') {
     e.respondWith(
       fetchWithTimeout(e.request, 8000)
         .then((response) => {
