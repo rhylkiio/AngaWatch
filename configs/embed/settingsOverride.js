@@ -18,8 +18,6 @@
  */
 
 // Settings Manager Overrides
-const proxy = 'https://dira.ksa.go.ke/?url=';
-
 const settingsOverride = {
   /*
    * These are the overrides for the embedded version.
@@ -484,8 +482,8 @@ const settingsOverride = {
   dataSources: {
     tle: `${proxy}${encodeURIComponent('https://api.keeptrack.space/v4/sats')}`,
     externalTLEsOnly: false,
-    tleDebris: `${proxy}${encodeURIComponent('https://app.keeptrack.space/tle/TLEdebris.json')}`,
-    vimpel: `${proxy}${encodeURIComponent('https://r2.keeptrack.space/vimpel.json')}`,
+    tleDebris: 'https://app.keeptrack.space/tle/TLEdebris.json',
+    vimpel: 'https://r2.keeptrack.space/vimpel.json',
     /** This determines if tle source is loaded to supplement externalTLEs  */
     isSupplementExternal: false,
   },
