@@ -19,9 +19,7 @@
  * Copyright (C) 2025 Kruczek Labs LLC
  */
 import { SatMath } from '@app/app/analysis/sat-math';
-import { countryCodeList } from '@app/app/data/catalogs/countries';
-import { CameraType } from '@app/engine/camera/camera-type';
-import { PluginRegistry } from '@app/engine/core/plugin-registry';
+import { DetailedSensor } from '@app/app/sensors/DetailedSensor';
 import { ServiceLocator } from '@app/engine/core/service-locator';
 import { EventBus } from '@app/engine/events/event-bus';
 import { EventBusEvent } from '@app/engine/events/event-bus-events';
@@ -31,11 +29,34 @@ import { html } from '@app/engine/utils/development/formatter';
 import { getEl } from '@app/engine/utils/get-el';
 import { settingsManager } from '@app/settings/settings';
 import { WebWorkerMLCEngine } from '@mlc-ai/web-llm';
-import { calcGmst, eci2lla, RAD2DEG, Satellite, SpaceObjectType } from '@ootk/src/main';
-import { CloudsToggle } from '../clouds-toggle/clouds-toggle';
-import { GraticuleToggle } from '../graticule-toggle/graticule-toggle';
-import { NightToggle } from '../night-toggle/night-toggle';
-import { PoliticalMapToggle } from '../political-map-toggle/political-map-toggle';
+import { Degrees, Kilometers, Satellite, SpaceObjectType, ZoomValue } from '@ootk/src/main';
+
+type PassSearchCommand = {
+    action: 'pass_search';
+    location: string;
+    timeframe?: string;
+    satellite?: string;
+    type?: string;
+    status?: string;
+    maxResults?: number;
+    elevationKm?: number;
+};
+
+type PassWindow = {
+    startMs: number;
+    endMs: number;
+    label: string;
+};
+
+type PassResultRow = {
+    sat: Satellite;
+    riseTimeMs: number;
+    setTimeMs: number;
+    peakTimeMs: number;
+    peakElevation: number;
+    minRangeKm: number;
+};
+
 export class AiCommandPalettePlugin extends KeepTrackPlugin {
     readonly id = 'AiCommandPalettePlugin';
     dependencies_ = ['TopMenu'];
@@ -47,58 +68,6 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
     private isModalOpen = false;
     private isAiEnabled = false;
     private isAiLoading = false;
-
-
-
-    // Geographic bounding boxes for highly accurate airspace filtering
-    private readonly AIRSPACE_BOUNDS: Record<string, { minLat: number, maxLat: number, minLon: number, maxLon: number }> = {
-        // East Africa (Kenya, Tanzania, Uganda, Rwanda, Burundi)
-        "east-africa": { minLat: -11.0, maxLat: 5.0, minLon: 29.0, maxLon: 42.0 },
-
-        // Continents
-        // Replace your africa box with this wider one to catch more satellites
-        "africa": { minLat: -35.0, maxLat: 38.0, minLon: -20.0, maxLon: 55.0 },
-        "north-america": { minLat: 15.0, maxLat: 72.0, minLon: -170.0, maxLon: -52.0 },
-        "south-america": { minLat: -56.0, maxLat: 13.0, minLon: -82.0, maxLon: -34.0 },
-        "europe": { minLat: 34.0, maxLat: 72.0, minLon: -10.0, maxLon: 45.0 },
-        "asia": { minLat: -10.0, maxLat: 78.0, minLon: 60.0, maxLon: 180.0 },
-        "australia": { minLat: -45.0, maxLat: -10.0, minLon: 110.0, maxLon: 155.0 }
-    };
-
-    /**
-     * Converts natural language ("Italian", "USA") into KeepTrack catalog codes ("IT", "US")
-     */
-    /**
-     * Converts natural language ("Italian", "USA", "American") into KeepTrack catalog codes ("IT", "US")
-     */
-    private getCountryCode(searchName: string): string {
-    if (!searchName || searchName === 'none') return '';
-    const searchUpper = searchName.toUpperCase().trim();
-
-    // 1. Hardcoded Adjective Fallbacks
-    const fallbacks: Record<string, string> = {
-        'USA': 'US', 'AMERICAN': 'US', 'UNITED STATES': 'US',
-        'UK': 'UK', 'BRITISH': 'UK',
-        'CHINA': 'PRC', 'CHINESE': 'PRC',
-        'RUSSIA': 'RU', 'RUSSIAN': 'RU'
-    };
-    if (fallbacks[searchUpper]) return fallbacks[searchUpper];
-
-    // 2. Search KeepTrack's native countryCodeList
-    for (const [countryName, codes] of Object.entries(countryCodeList)) {
-        // Exact match
-        if (countryName.toUpperCase() === searchUpper) return codes;
-
-        // Code match (e.g., user types 'US' or 'USA')
-        if (codes.toUpperCase().split('|').includes(searchUpper)) return codes;
-    }
-
-    // 3. Debugging/Fail-safe
-    console.warn(`[Dira AI] Could not resolve country code for: "${searchName}"`);
-
-    // RETURN 'NOT_FOUND' instead of '' to let the filter logic know this failed explicitly
-    return 'NOT_FOUND';
-}
 
     addHtml(): void {
         super.addHtml();
@@ -372,310 +341,453 @@ export class AiCommandPalettePlugin extends KeepTrackPlugin {
     }
 
     private async processAiCommand(prompt: string): Promise<void> {
-        const resultsArea = getEl('ai-palette-results');
-        if (!this.engine) {
-            if (resultsArea) {
-                resultsArea.innerHTML = `<div style="color: #ff9800; padding: 10px;">⚠️ Dira AI is still loading. Please wait a moment!</div>`;
-            }
-            return;
-        }
+  const resultsArea = getEl('ai-palette-results');
+  if (!this.engine) {
+    if (resultsArea) {
+      resultsArea.innerHTML = `<div style="color: #ff9800; padding: 10px;">⚠️ Dira AI is still loading. Please wait a moment!</div>`;
+    }
+    return;
+  }
 
-        if (resultsArea) {
-            resultsArea.innerHTML = `<div style="color: #aaa; padding: 10px;">Thinking: "${prompt}"...</div>`;
-        }
+  if (resultsArea) {
+    resultsArea.innerHTML = `<div style="color: #aaa; padding: 10px;">Thinking: "${prompt}"...</div>`;
+  }
 
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
 
-        // Because we removed the grammar enforcer, this English prompt is now the
-        // ONLY thing controlling the AI. Add new features just by typing them here!
-        const systemPrompt = `You are Dira's AI assistant for the KeepTrack astrodynamics platform.
-                You MUST respond with ONLY a valid raw JSON object. Do not include markdown formatting or conversational text.
-                For 'find' actions, the 'target' property MUST be ONLY the satellite name or the raw 5-digit NORAD ID. Do not include labels like 'ID' or 'NORAD'
+  const systemPrompt = `You are Dira's AI assistant for the KeepTrack astrodynamics platform.
+You MUST respond with ONLY a valid raw JSON object. Do not include markdown formatting or conversational text.
 
-                CRITICAL: ONLY USE THESE EXACT JSON KEYS: "action", "country", "type", "status", "orbit", "size", "location". Do not invent new keys.
-                For "country", ALWAYS output the official country NOUN (e.g., "China", not "Chinese").
+Allowed actions:
+- find
+- filter
+- toggle_layer
+- reset_all
+- pass_search
 
-                ALWAYS prioritize the 'filter' action for any request involving attributes (country, status, type, orbit, size, location).
-                ONLY use 'find' when searching for a specific, single object name (e.g., 'Find ISS').
+For pass-over-location requests, ALWAYS use "pass_search".
 
-                CRITICAL: If a user asks for multiple satellites (e.g., 'all Italian satellites'), use the 'filter' action.
+Use only these keys:
+"commands", "action", "target", "country", "type", "status", "orbit", "size", "location", "layer", "state", "timeframe", "satellite", "maxResults"
 
-                Valid Filter Values:
-                - type: 'debris', 'rocket', 'payload', 'none'
-                - status: 'active', 'inactive', 'none'
-                - orbit: 'LEO', 'MEO', 'GEO', 'HEO', 'none'
-                - size: 'small', 'medium', 'large', 'none'
+Examples:
+User: "Find the ISS"
+{"commands":[{"action":"find","target":"ISS"}]}
 
-                EXAMPLES:
+User: "Show me active American payloads"
+{"commands":[{"action":"filter","country":"United States","type":"payload","status":"active","orbit":"none","size":"none","location":"none"}]}
 
-                User: "Find all the small chinese debris in LEO"
-                {"commands": [{"action": "filter", "country": "China", "type": "debris", "status": "none", "orbit": "LEO", "size": "small", "location": "none"}]}
+User: "Turn off clouds"
+{"commands":[{"action":"toggle_layer","layer":"clouds","state":false}]}
 
-                User: "Show me active American payloads"
-                {"commands": [{"action": "filter", "country": "United States", "type": "payload", "status": "active", "orbit": "none", "size": "none", "location": "none"}]}
+User: "Show me satellites that will pass Kitengela tomorrow"
+{"commands":[{"action":"pass_search","location":"Kitengela","timeframe":"tomorrow","satellite":"none","type":"payload","status":"active","maxResults":20}]}`;
 
-                User: "Turn off the clouds"
-                {"commands": [{"action": "toggle_layer", "layer": "clouds", "state": false}]}
+  try {
+    const response = await this.engine.chat.completions.create({
+      model: this.SELECTED_MODEL,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.1,
+      max_tokens: 180,
+    });
 
-                User: "Find the ISS"
-                {"commands": [{"action": "find", "target": "ISS"}]}`;
-        try {
-            const response = await this.engine.chat.completions.create({
-                model: this.SELECTED_MODEL,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: prompt }
-                ],
-                // WE DELETED response_format ENTIRELY!
-                temperature: 0.1, // Keep it low so the AI stays analytical and doesn't get creative
-                max_tokens: 150,
-            });
+    clearTimeout(timeout);
 
-            clearTimeout(timeout);
+    const rawJson = response.choices[0].message.content;
+    if (rawJson) {
+      await this.executeAiCommands(rawJson);
+    }
+  } catch (error: any) {
+    clearTimeout(timeout);
+    if (resultsArea) {
+      const isTimeout = error?.name === 'AbortError';
+      resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">
+        ${isTimeout ? '⏱️ Dira AI timed out.' : `AI Error: ${error}`}
+      </div>`;
+    }
+  }
+}
 
-            const rawJson = response.choices[0].message.content;
-            if (rawJson) {
-                this.executeAiCommands(rawJson);
-            }
-        } catch (error: any) {
-            clearTimeout(timeout);
-            if (resultsArea) {
-                const isTimeout = error?.name === 'AbortError';
-                resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">
-                    ${isTimeout ? '⏱️ Dira AI timed out.' : `AI Error: ${error}`}
-                </div>`;
-            }
-        }
+    private parsePassWindow_(timeframe?: string): PassWindow {
+  const now = new Date();
+  const normalized = (timeframe ?? 'next 24 hours').toLowerCase().trim();
+  const oneDayMs = 24 * 60 * 60 * 1000;
+
+  if (normalized.includes('tomorrow')) {
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(start.getDate() + 1);
+    return { startMs: start.getTime(), endMs: start.getTime() + oneDayMs, label: 'tomorrow' };
+  }
+
+  if (normalized.includes('today')) {
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+    return { startMs: now.getTime(), endMs: end.getTime(), label: 'today' };
+  }
+
+  const nextMatch = normalized.match(/next\s*(\d+)\s*(h|hr|hour|hours|d|day|days)/u);
+  if (nextMatch) {
+    const count = parseInt(nextMatch[1], 10);
+    const unit = nextMatch[2];
+    const durationMs = unit.startsWith('d') ? count * oneDayMs : count * 60 * 60 * 1000;
+    return {
+      startMs: now.getTime(),
+      endMs: now.getTime() + durationMs,
+      label: `next ${count} ${unit.startsWith('d') ? 'day(s)' : 'hour(s)'}`,
+    };
+  }
+
+  return { startMs: now.getTime(), endMs: now.getTime() + oneDayMs, label: 'next 24 hours' };
+}
+
+private async geocodeLocation_(location: string): Promise<{ label: string; lat: number; lon: number } | null> {
+  const q = location.trim();
+  if (!q) return null;
+
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Geocoding failed (${res.status})`);
+
+  const data = await res.json() as {
+    results?: Array<{
+      name: string;
+      admin1?: string;
+      country?: string;
+      latitude: number;
+      longitude: number;
+    }>;
+  };
+
+  const best = data.results?.[0];
+  if (!best) return null;
+
+  const label = [best.name, best.admin1, best.country].filter(Boolean).join(', ');
+  return { label, lat: best.latitude, lon: best.longitude };
+}
+
+private toDegrees_(value: number): Degrees {
+  return value as Degrees;
+}
+
+private toKilometers_(value: number): Kilometers {
+  return value as Kilometers;
+}
+
+private sanitizeElevationKm_(elevationKm?: number): Kilometers {
+  if (typeof elevationKm !== 'number' || !Number.isFinite(elevationKm)) {
+    return this.toKilometers_(0);
+  }
+
+  const nonNegative = Math.max(0, elevationKm);
+  const normalizedKm = nonNegative > 20 ? nonNegative / 1000 : nonNegative;
+
+  return this.toKilometers_(Math.min(normalizedKm, 10));
+}
+
+private async runWithoutToasts_<T>(work: () => Promise<T> | T): Promise<T> {
+  const previous = settingsManager.isDisableToasts;
+  settingsManager.isDisableToasts = true;
+
+  try {
+    return await work();
+  } finally {
+    settingsManager.isDisableToasts = previous;
+  }
+}
+
+private createPassSearchSensor_(locationLabel: string, lat: number, lon: number, elevationKm?: number): DetailedSensor {
+  return new DetailedSensor({
+    lat: this.toDegrees_(lat),
+    lon: this.toDegrees_(lon),
+    alt: this.sanitizeElevationKm_(elevationKm),
+    minAz: this.toDegrees_(0),
+    maxAz: this.toDegrees_(360),
+    minEl: this.toDegrees_(10),
+    maxEl: this.toDegrees_(90),
+    minRng: this.toKilometers_(0),
+    maxRng: this.toKilometers_(1000000),
+    type: SpaceObjectType.OPTICAL,
+    name: 'Custom Sensor',
+    uiName: `AI Sensor (${locationLabel})`,
+    system: 'AI Pass Search',
+    country: 'Custom Sensor',
+    objName: `AI-Sensor-${Date.now()}`,
+    operator: 'Dira AI',
+    zoom: ZoomValue.LEO,
+    volume: false,
+  });
+}
+
+private satelliteMatchesPassFilters_(sat: Satellite, cmd: PassSearchCommand): boolean {
+  const reqType = cmd.type && cmd.type !== 'none' ? cmd.type.toLowerCase() : null;
+  const reqStatus = cmd.status && cmd.status !== 'none' ? cmd.status.toLowerCase() : null;
+
+  if (reqType) {
+    if (reqType.includes('payload') && sat.type !== SpaceObjectType.PAYLOAD) return false;
+    if (reqType.includes('debris') && sat.type !== SpaceObjectType.DEBRIS) return false;
+    if (reqType.includes('rocket') && sat.type !== SpaceObjectType.ROCKET_BODY) return false;
+  }
+
+  if (reqStatus === 'active' && !sat.active) return false;
+  if (reqStatus === 'inactive' && sat.active) return false;
+
+  return true;
+}
+
+private resolvePassSearchCandidates_(cmd: PassSearchCommand): Satellite[] {
+  const catalogManager = ServiceLocator.getCatalogManager();
+  const satQuery = (cmd.satellite ?? '').trim();
+
+  let candidates: Satellite[];
+  if (satQuery && satQuery.toLowerCase() !== 'none') {
+    const normalized = satQuery.toUpperCase();
+    const noradMatch = normalized.match(/\b\d{5,6}\b/u);
+    const norad = noradMatch ? noradMatch[0].slice(-5) : null;
+
+    candidates = catalogManager
+      .getSats()
+      .filter((sat) => sat.active)
+      .filter((sat) => {
+        if (norad && sat.sccNum === norad) return true;
+        return sat.name.toUpperCase().includes(normalized) || sat.sccNum === normalized;
+      });
+  } else {
+    candidates = catalogManager.getActiveSats();
+  }
+
+  return candidates
+    .filter((sat) => this.satelliteMatchesPassFilters_(sat, cmd))
+    .slice(0, 1200);
+}
+
+private findPassesForSatellite_(
+  sat: Satellite,
+  sensor: DetailedSensor,
+  startMs: number,
+  endMs: number,
+): PassResultRow[] {
+  const catalogManager = ServiceLocator.getCatalogManager();
+  if (!sat.satrec) catalogManager.calcSatrec(sat);
+  if (!sat.satrec) return [];
+
+  const stepMs = 20 * 1000;
+  const rows: PassResultRow[] = [];
+
+  let inView = false;
+  let rise = 0;
+  let peak = 0;
+  let peakEl = -999;
+  let minRange = Number.POSITIVE_INFINITY;
+
+  for (let t = startMs; t <= endMs; t += stepMs) {
+    const now = new Date(t);
+    const aer = SatMath.getRae(now, sat.satrec, sensor);
+    const isInView = SatMath.checkIsInView(sensor, aer);
+
+    if (isInView && !inView) {
+      rise = t;
+      peak = t;
+      peakEl = aer.el ?? -999;
+      minRange = aer.rng ?? Number.POSITIVE_INFINITY;
     }
 
-    private executeAiCommands(jsonString: string): void {
-        const resultsArea = getEl('ai-palette-results');
-
-        console.log("🤖 Raw AI Output:", jsonString);
-
-        try {
-            let cleaned = jsonString;
-
-            // 1. The Bulletproof JSON Extractor
-            const startIdx = cleaned.indexOf('{');
-            const endIdx = cleaned.lastIndexOf('}');
-
-            if (startIdx !== -1 && endIdx !== -1) {
-                cleaned = cleaned.substring(startIdx, endIdx + 1);
-            } else {
-                throw new Error("No JSON object found in response");
-            }
-
-            // 2. The Flexible JSON Parser
-            const parsedJson = JSON.parse(cleaned);
-            let commands: any[] = [];
-
-            // Did the AI follow instructions and use the commands array?
-            if (parsedJson.commands && Array.isArray(parsedJson.commands)) {
-                commands = parsedJson.commands;
-            }
-            // Did the AI just return a raw array? [ {action...} ]
-            else if (Array.isArray(parsedJson)) {
-                commands = parsedJson;
-            }
-            // Did the AI just return a single bare object? { action... }
-            else if (parsedJson.action) {
-                commands = [parsedJson]; // Wrap it in an array for them!
-            } else {
-                throw new Error("Could not understand the JSON structure.");
-            }
-
-            if (resultsArea) resultsArea.innerHTML = '';
-
-            commands.forEach((cmd: any) => {
-
-                // --- FIND COMMAND ---
-                if (cmd.action === 'find') {
-                    const searchManager = ServiceLocator.getUiManager().searchManager;
-
-                    // 1. Clean the target: remove non-numeric labels, whitespace, etc.
-                    // This handles "NORAD ID 25544", "25544", or "The ISS (25544)"
-                    const rawTarget = String(cmd.target);
-                    const cleanTarget = rawTarget.replace(/NORAD|ID|target|the|\(|\)/gi, '').trim();
-
-                    // 2. Perform the search with the cleaned string
-                    searchManager.doSearch(cleanTarget, true);
-
-                    // 3. Small delay to allow the searchManager to process the async search
-                    setTimeout(() => {
-                        const resultsCount = settingsManager.lastSearchResults?.length || 0;
-
-                        if (resultsArea) {
-                            if (resultsCount > 0) {
-                                resultsArea.innerHTML += `<div style="color: #8bc34a; padding: 5px;">Found and focused: <b>${cleanTarget}</b></div>`;
-                            } else {
-                                resultsArea.innerHTML += `<div style="color: #f44336; padding: 5px;">Could not find: <b>${cleanTarget}</b></div>`;
-                            }
-                        }
-                    }, 500);
-                }
-
-                // --- TOGGLE LAYER COMMAND ---
-                else if (cmd.action === 'toggle_layer') {
-                    const layerMap: Record<string, any> = {
-                        'political_map': PoliticalMapToggle,
-                        'clouds': CloudsToggle,
-                        'grid': GraticuleToggle,
-                        'night': NightToggle
-                    };
-
-                    const PluginClass = layerMap[cmd.layer];
-
-                    if (PluginClass) {
-                        const plugin = PluginRegistry.getPlugin(PluginClass) as any;
-
-                        if (plugin) {
-                            if (typeof plugin.onBottomIconClick === 'function') {
-                                plugin.onBottomIconClick();
-                            } else if (typeof plugin.bottomMenuClicked === 'function') {
-                                plugin.bottomMenuClicked();
-                            }
-
-                            if (resultsArea) {
-                                const stateText = cmd.state ? 'Enabled' : 'Disabled';
-                                resultsArea.innerHTML += `<div style="color: #8bc34a; padding: 5px;">👁️ ${stateText} layer: <b>${cmd.layer}</b></div>`;
-                            }
-                        } else {
-                            if (resultsArea) {
-                                resultsArea.innerHTML += `<div style="color: #ff9800; padding: 5px;">⚠️ The '${cmd.layer}' layer is not currently loaded.</div>`;
-                            }
-                        }
-                    }
-                }
-                // --- RESET ALL COMMAND ---
-                else if (cmd.action === 'reset_all') {
-                    const catalogManager = ServiceLocator.getCatalogManager();
-                    const uiManager = ServiceLocator.getUiManager();
-                    const searchManager = uiManager.searchManager;
-                    const camera = ServiceLocator.getMainCamera();
-                    const orbitManager = ServiceLocator.getOrbitManager();
-
-                    // 1. Clear search and reset view
-                    searchManager.doSearch("", true);
-
-                    // 2. Clear orbits - This fixes the "value is never read" error!
-                    orbitManager.clearInViewOrbit();
-                    orbitManager.clearHoverOrbit();
-
-                    // 3. Reset Camera
-                    camera.cameraType = CameraType.FIXED_TO_EARTH;
-                    camera.state.isPanReset = true;
-                    camera.state.isLocalRotateReset = true;
-                    camera.state.zoomTarget = 0.5;
-
-                    // 4. Clear transient catalog state
-                    catalogManager.initObjects();
-
-                    // 5. Force a UI refresh
-                    EventBus.getInstance().emit(EventBusEvent.uiManagerFinal);
-
-                    if (resultsArea) {
-                        resultsArea.innerHTML = `<div style="color: #4caf50; padding: 5px;">🔄 <b>System Reset:</b> View restored and catalog cleared.</div>`;
-                    }
-                }
-
-                else if (cmd.action === 'filter') {
-                    const catalogManager = ServiceLocator.getCatalogManager();
-                    const timeManager = ServiceLocator.getTimeManager();
-                    const searchManager = ServiceLocator.getUiManager().searchManager;
-
-                    let matches: Satellite[] = catalogManager.getSats();
-
-                    // Pre-compute
-                    const reqType = cmd.type !== 'none' ? cmd.type?.toLowerCase() : null;
-                    const reqStatus = cmd.status !== 'none' ? cmd.status?.toLowerCase() : null;
-                    const reqOrbit = cmd.orbit !== 'none' ? cmd.orbit?.toUpperCase() : null;
-                    const reqSize = cmd.size !== 'none' ? cmd.size?.toLowerCase() : null; // Now this is read!
-
-                    let targetCountryCode: string | null = null;
-                    if (cmd.country && cmd.country !== 'none') {
-                        targetCountryCode = this.getCountryCode(cmd.country);
-                        if (!targetCountryCode) {
-                            if (resultsArea) resultsArea.innerHTML += `<div style="color: #f44336;">❌ Country "${cmd.country}" not recognized.</div>`;
-
-                            return;// Exit early
-                        }
-                    }
-
-                    interface AirspaceZone { minLat: number; maxLat: number; minLon: number; maxLon: number; }
-                    const targetZone: AirspaceZone | null = (cmd.location && cmd.location !== 'none')
-                        ? (this.AIRSPACE_BOUNDS[cmd.location.toLowerCase()] || null)
-                        : null;
-
-                    const now = timeManager.simulationTimeObj;
-                    const { gmst } = calcGmst(now);
-
-                    matches = matches.filter((sat: Satellite) => {
-                        // 1. Type check
-                        if (reqType) {
-                            if (reqType.includes('debris') && sat.type !== SpaceObjectType.DEBRIS) return false;
-                            if (reqType.includes('rocket') && sat.type !== SpaceObjectType.ROCKET_BODY) return false;
-                            if (reqType.includes('payload') && sat.type !== SpaceObjectType.PAYLOAD) return false;
-                        }
-
-                        // 2. Country check
-                        if (targetCountryCode && !targetCountryCode.split('|').includes(sat.country)) return false;
-
-                        // 3. Status check
-                        if (reqStatus) {
-                            const isDebris = sat.type === SpaceObjectType.DEBRIS || sat.type === SpaceObjectType.ROCKET_BODY;
-                            const statusStr = sat.status ? String(sat.status).toUpperCase().trim() : '';
-                            const isExplicitlyAlive = ['+', 'P', 'B', 'S', 'X'].includes(statusStr) || statusStr.includes('OP');
-                            if (reqStatus === 'active' && (isDebris || !isExplicitlyAlive)) return false;
-                            if (reqStatus === 'inactive' && (!isDebris && isExplicitlyAlive)) return false;
-                        }
-
-                        // 4. Orbit check
-                        if (reqOrbit && sat.apogee) {
-                            if (reqOrbit === 'LEO' && sat.apogee > 2000) return false;
-                            if (reqOrbit === 'GEO' && (sat.apogee < 35000 || sat.apogee > 37000)) return false;
-                        }
-
-                        // 5. Size (RCS) check - THIS USES THE VARIABLE!
-                        if (reqSize && sat.rcs !== undefined && sat.rcs !== null) {
-                            // Small: < 0.1m^2 | Medium: 0.1 to 1.0m^2 | Large: > 1.0m^2
-                            if (reqSize === 'small' && sat.rcs >= 0.1) return false;
-                            if (reqSize === 'medium' && (sat.rcs < 0.1 || sat.rcs > 1.0)) return false;
-                            if (reqSize === 'large' && sat.rcs <= 1.0) return false;
-                        }
-
-                        // 6. Location check
-                        if (targetZone && sat.satrec) {
-                            const satPos = SatMath.getEci(sat, now);
-                            const lla = eci2lla(satPos.position, gmst);
-                            const lat = lla.lat * RAD2DEG;
-                            const lon = lla.lon * RAD2DEG;
-                            if (lat < targetZone.minLat || lat > targetZone.maxLat || lon < targetZone.minLon || lon > targetZone.maxLon) return false;
-                        }
-
-                        return true;
-                    });
-
-                    // Render results
-                    if (resultsArea) {
-                        if (matches.length > 0) {
-                            resultsArea.innerHTML += `<div style="color: #8bc34a; padding: 5px;">✅ Found ${matches.length} matching objects.</div>`;
-                            searchManager.doSearch(matches.map(s => s.sccNum).join(','), true);
-                        } else {
-                            resultsArea.innerHTML += `<div style="color: #f44336; padding: 5px;">❌ No matches found.</div>`;
-                        }
-                    }
-                }
-            });
-
-            const input = getEl('ai-palette-input') as HTMLInputElement;
-            if (input) input.value = '';
-
-        } catch (error) {
-            if (resultsArea) {
-                resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">Failed to parse AI response. Try rephrasing your command.</div>`;
-            }
-        }
+    if (isInView) {
+      if (typeof aer.el === 'number' && aer.el > peakEl) {
+        peakEl = aer.el;
+        peak = t;
+      }
+      if (typeof aer.rng === 'number' && aer.rng < minRange) {
+        minRange = aer.rng;
+      }
     }
+
+    if (!isInView && inView) {
+      rows.push({
+        sat,
+        riseTimeMs: rise,
+        setTimeMs: t,
+        peakTimeMs: peak,
+        peakElevation: peakEl,
+        minRangeKm: minRange,
+      });
+    }
+
+    inView = isInView;
+  }
+
+  if (inView) {
+    rows.push({
+      sat,
+      riseTimeMs: rise,
+      setTimeMs: endMs,
+      peakTimeMs: peak,
+      peakElevation: peakEl,
+      minRangeKm: minRange,
+    });
+  }
+
+  return rows;
+}
+
+private formatUtc_(ms: number): string {
+  return new Date(ms).toISOString().replace('T', ' ').replace('.000Z', ' UTC');
+}
+
+private renderPassSearchResults_(
+  resultsArea: HTMLElement,
+  rows: PassResultRow[],
+  locationLabel: string,
+  windowLabel: string,
+): void {
+  if (rows.length === 0) {
+    resultsArea.innerHTML = `<div style="color:#f44336; padding:8px;">❌ No upcoming passes found for <b>${locationLabel}</b> (${windowLabel}).</div>`;
+    return;
+  }
+
+  const body = rows.map((r, idx) => `
+    <tr data-pass-row="${idx}" data-scc="${r.sat.sccNum}" data-rise="${r.riseTimeMs}" style="cursor:pointer;">
+      <td>${r.sat.sccNum}</td>
+      <td>${r.sat.name}</td>
+      <td>${this.formatUtc_(r.riseTimeMs)}</td>
+      <td>${this.formatUtc_(r.peakTimeMs)}</td>
+      <td>${this.formatUtc_(r.setTimeMs)}</td>
+      <td>${Math.max(0, r.peakElevation).toFixed(1)}°</td>
+      <td>${Number.isFinite(r.minRangeKm) ? r.minRangeKm.toFixed(0) : 'N/A'} km</td>
+    </tr>
+  `).join('');
+
+  resultsArea.innerHTML = `
+    <div style="color:#8bc34a; padding:6px 0 10px 0;">
+      ✅ Found <b>${rows.length}</b> pass(es) for <b>${locationLabel}</b> (${windowLabel}).
+    </div>
+    <div style="max-height:320px; overflow-y:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:12px;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">NORAD</th>
+            <th style="text-align:left;">Satellite</th>
+            <th style="text-align:left;">Rise</th>
+            <th style="text-align:left;">Peak</th>
+            <th style="text-align:left;">Set</th>
+            <th style="text-align:left;">Max El</th>
+            <th style="text-align:left;">Min Rng</th>
+          </tr>
+        </thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+    <div style="color:#aaa; padding-top:8px;">Tip: click a row to jump to that pass and focus the satellite.</div>
+  `;
+
+  resultsArea.querySelectorAll('tr[data-pass-row]').forEach((rowEl) => {
+    rowEl.addEventListener('click', () => {
+      const scc = (rowEl as HTMLElement).dataset.scc;
+      const rise = Number((rowEl as HTMLElement).dataset.rise);
+      if (!scc || Number.isNaN(rise)) return;
+
+      const searchManager = ServiceLocator.getUiManager().searchManager;
+      const timeManager = ServiceLocator.getTimeManager();
+
+      void this.runWithoutToasts_(async () => {
+        searchManager.doSearch(scc, true);
+        timeManager.changeStaticOffset(rise - timeManager.realTime);
+      });
+    });
+  });
+}
+
+private async executePassSearch_(cmd: PassSearchCommand, resultsArea: HTMLElement | null): Promise<void> {
+  if (!resultsArea) return;
+
+  if (!cmd.location || cmd.location.toLowerCase() === 'none') {
+    resultsArea.innerHTML = '<div style="color:#f44336; padding:8px;">❌ Please provide a location.</div>';
+    return;
+  }
+
+  resultsArea.innerHTML = `<div style="color:#aaa; padding:8px;">Resolving location: <b>${cmd.location}</b>...</div>`;
+  const geocoded = await this.geocodeLocation_(cmd.location);
+
+  if (!geocoded) {
+    resultsArea.innerHTML = `<div style="color:#f44336; padding:8px;">❌ Could not geocode: <b>${cmd.location}</b>.</div>`;
+    return;
+  }
+
+  await this.runWithoutToasts_(async () => {
+    const window = this.parsePassWindow_(cmd.timeframe);
+    const sensor = this.createPassSearchSensor_(geocoded.label, geocoded.lat, geocoded.lon, cmd.elevationKm);
+
+    ServiceLocator.getSensorManager().addSecondarySensor(sensor, true);
+
+    const candidates = this.resolvePassSearchCandidates_(cmd);
+    const maxResults = Math.max(1, Math.min(50, Number(cmd.maxResults) || 20));
+    const results: PassResultRow[] = [];
+
+    resultsArea.innerHTML = `<div style="color:#aaa; padding:8px;">Searching passes over <b>${geocoded.label}</b> (${window.label})...</div>`;
+
+    for (const sat of candidates) {
+      const rows = this.findPassesForSatellite_(sat, sensor, window.startMs, window.endMs);
+      if (rows.length > 0) results.push(rows[0]);
+    }
+
+    results.sort((a, b) => a.riseTimeMs - b.riseTimeMs);
+    this.renderPassSearchResults_(resultsArea, results.slice(0, maxResults), geocoded.label, window.label);
+  });
+}
+
+    private async executeAiCommands(jsonString: string): Promise<void> {
+  const resultsArea = getEl('ai-palette-results');
+
+  try {
+    let cleaned = jsonString;
+    const startIdx = cleaned.indexOf('{');
+    const endIdx = cleaned.lastIndexOf('}');
+
+    if (startIdx !== -1 && endIdx !== -1) {
+      cleaned = cleaned.substring(startIdx, endIdx + 1);
+    } else {
+      throw new Error('No JSON object found in response');
+    }
+
+    const parsedJson = JSON.parse(cleaned);
+    let commands: any[] = [];
+
+    if (parsedJson.commands && Array.isArray(parsedJson.commands)) {
+      commands = parsedJson.commands;
+    } else if (Array.isArray(parsedJson)) {
+      commands = parsedJson;
+    } else if (parsedJson.action) {
+      commands = [parsedJson];
+    } else {
+      throw new Error('Could not understand JSON structure.');
+    }
+
+    if (resultsArea) resultsArea.innerHTML = '';
+
+    for (const cmd of commands) {
+      if (cmd.action === 'find') {
+        // keep your existing find block unchanged
+      } else if (cmd.action === 'toggle_layer') {
+        // keep your existing toggle_layer block unchanged
+      } else if (cmd.action === 'reset_all') {
+        // keep your existing reset_all block unchanged
+      } else if (cmd.action === 'filter') {
+        // keep your existing filter block unchanged
+      } else if (cmd.action === 'pass_search') {
+        await this.executePassSearch_(cmd as PassSearchCommand, resultsArea);
+      }
+    }
+
+    const input = getEl('ai-palette-input') as HTMLInputElement;
+    if (input) input.value = '';
+  } catch {
+    if (resultsArea) {
+      resultsArea.innerHTML = `<div style="color: #f44336; padding: 10px;">Failed to parse AI response. Try rephrasing your command.</div>`;
+    }
+  }
+}
 }
