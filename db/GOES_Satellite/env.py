@@ -1,0 +1,8 @@
+PrimaryData6Hours = "https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json"
+SecondaryData6Hours = "https://services.swpc.noaa.gov/json/goes/secondary/xrays-6-hour.json"
+PrimaryData3Days = "https://services.swpc.noaa.gov/json/goes/primary/xrays-3-day.json"
+SecondaryData3Days = "https://services.swpc.noaa.gov/json/goes/secondary/xrays-3-day.json"
+PrimaryData7Days = "https://services.swpc.noaa.gov/json/goes/primary/xrays-7-day.json"
+SecondaryData7Days = "https://services.swpc.noaa.gov/json/goes/secondary/xrays-7-day.json"
+CopyFromDir=""
+CopyToDir="/var/www/html/goes-x-ray-graphs/"
