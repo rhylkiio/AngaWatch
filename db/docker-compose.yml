@@ -1,6 +1,4 @@
 # AngaWatch — unified docker-compose.yml
-# Merges: db/docker-compose.yml  +  docker-compose.yml  +  docker-compose.prod.yml
-# Place this file at the project root alongside the .env file.
 # Usage:
 #   docker compose up --build          (start everything)
 #   docker compose up --build dira     (dashboard only)
@@ -26,8 +24,6 @@ services:
       - influxdb_config:/etc/influxdb2
       - ./db/init-buckets.sh:/docker-entrypoint-initdb.d/init-buckets.sh
     restart: always
-
-  # ── Data-ingestion workers (built from db/Dockerfile) ────────────────────
 
   # --- SCINTILLATION ---
   scintillation_app:
@@ -109,8 +105,8 @@ services:
     env_file:
       - .env
     ports:
-      - "80:5544"  # <--- FIX: Maps your laptop's port 80 to the internal node port 5544
-    environment:   # <--- FIX: Moved from args so the app can read these at runtime
+      - "80:5544"  
+    environment:   
       - NODE_ENV=production
       - INFLUXDB_URL=http://influxdb:9999
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
@@ -125,7 +121,6 @@ services:
     mem_limit: 512m
     cpus: 0.59
     healthcheck:
-      # FIX: Updated healthcheck to ping port 5544 inside the container
       test: ["CMD-SHELL", "curl -f http://localhost:5544 || exit 1"]
       interval: 30s
       timeout: 10s
